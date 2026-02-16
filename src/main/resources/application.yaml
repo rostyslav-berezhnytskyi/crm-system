@@ -16,6 +16,15 @@ spring:
       hibernate:
         format_sql: true
 
+  thymeleaf:
+    cache: false  # <--- CRITICAL for development!
+    prefix: classpath:/templates/
+    suffix: .html
+
+# Custom ELS Configuration
+els:
+  upload-dir: uploads # create an 'uploads' folder in project root
+
 #  flyway:
 #    enabled: true
 #    baseline-on-migrate: true

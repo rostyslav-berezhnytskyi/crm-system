@@ -1,13 +1,15 @@
 package com.els.crmsystem.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "projects")
@@ -17,13 +19,30 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name; // e.g., "OSBB Installation"
+    @NotBlank(message = "Project name cannot be empty")
+    @Column(nullable = false, unique = true, length = 100)
+    private String name; // e.g., "Kyiv Office Installation"
 
+    @Column(length = 1000)
     private String description; // e.g., "Installation of 30kW Deye + 60kWh Battery"
 
+    /**
+     * Status of the project.
+     * true = Open/Working
+     * false = Closed/Archived (Job done)
+     */
     @Column(nullable = false)
-    private boolean active = true; // Default to true. Uncheck this when job is done.
+    private boolean active = true;
 
-    private LocalDateTime createdDate = LocalDateTime.now(); // Auto-set time
+    @Column(name = "created_date", nullable = false, updatable = false)
+    private LocalDateTime createdDate;
+
+    // --- LIFECYCLE HOOKS ---
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdDate == null) {
+            this.createdDate = LocalDateTime.now();
+        }
+    }
 }

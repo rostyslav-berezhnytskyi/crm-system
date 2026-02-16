@@ -22,9 +22,9 @@ public class TransactionService {
     @Transactional
     public void createTransaction(TransactionDto dto, String username) {
 
-        // 1. Find the Project (Throw error if not found)
+        // 1. Find the ProjectService (Throw error if not found)
         Project project = projectRepository.findById(dto.projectId())
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + dto.projectId()));
+                .orElseThrow(() -> new RuntimeException("ProjectService not found with ID: " + dto.projectId()));
 
         // 2. Find the User (We use the username from the logged-in session)
         User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found: " + username));

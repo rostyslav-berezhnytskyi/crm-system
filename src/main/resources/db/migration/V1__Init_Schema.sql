@@ -26,6 +26,7 @@ CREATE TABLE transactions (
                               description VARCHAR(500),
                               date TIMESTAMP NOT NULL,
                               receipt_image_url VARCHAR(255),
+                              item_image_url VARCHAR(255),
 
     -- Foreign Keys
                               user_id BIGINT NOT NULL REFERENCES users(id),

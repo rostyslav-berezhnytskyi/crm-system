@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public record TransactionDto(
-        @NotNull(message = "Project ID is required")
+        @NotNull(message = "ProjectService ID is required")
         Long projectId,
 
         @NotNull(message = "Type (INCOME/EXPENSE) is required")
