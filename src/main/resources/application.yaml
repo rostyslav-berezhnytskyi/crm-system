@@ -21,6 +21,11 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
 
+  servlet:
+    multipart:
+      max-file-size: 50MB       # Default is 1MB. Increased for Videos/High-Res Photos.
+      max-request-size: 60MB    # Total size if uploading multiple files at once.
+
 # Custom ELS Configuration
 els:
   upload-dir: uploads # create an 'uploads' folder in project root

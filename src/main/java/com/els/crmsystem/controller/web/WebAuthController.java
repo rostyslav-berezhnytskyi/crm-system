@@ -22,21 +22,21 @@ public class WebAuthController {
     }
 
     // 2. Handle the Form Submit (Browser: POST /register)
-    @PostMapping("/register")
-    public String registerUser(@RequestParam String username,
-                               @RequestParam String email,
-                               @RequestParam String password,
-                               Model model) {
-        try {
-            // Call your Service (The logic you already wrote)
-            userService.registerUser(username, password, email);
-
-            // If successful, redirect to same page with a success flag
-            return "redirect:/register?success";
-        } catch (RuntimeException e) {
-            // If error (e.g., duplicate user), reload page with error message
-            model.addAttribute("error", e.getMessage());
-            return "register";
-        }
-    }
+//    @PostMapping("/register")
+//    public String registerUser(@RequestParam String username,
+//                               @RequestParam String email,
+//                               @RequestParam String password,
+//                               @RequestParam String phoneNumber, Model model) {
+//        try {
+//            // Call your Service (The logic you already wrote)
+//            userService.registerUser(username, password, email, phoneNumber);
+//
+//            // If successful, redirect to same page with a success flag
+//            return "redirect:/register?success";
+//        } catch (RuntimeException e) {
+//            // If error (e.g., duplicate user), reload page with error message
+//            model.addAttribute("error", e.getMessage());
+//            return "register";
+//        }
+//    }
 }

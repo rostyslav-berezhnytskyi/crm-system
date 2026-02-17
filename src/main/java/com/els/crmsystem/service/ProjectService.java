@@ -1,62 +1,70 @@
 package com.els.crmsystem.service;
 
-import com.els.crmsystem.dto.ProjectDto;
+import com.els.crmsystem.dto.input.ProjectInputDto;
+import com.els.crmsystem.dto.output.ProjectOutputDto;
 import com.els.crmsystem.entity.Project;
+import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.ProjectRepository;
+import com.els.crmsystem.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service for managing Projects (Installations, Repairs, etc.).
+ */
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final TransactionRepository transactionRepository;
+    private final EntityMapper mapper;
 
+    // --- CREATE ---
     @Transactional
-    public void createProject(ProjectDto dto) {
+    public void createProject(ProjectInputDto dto) {
         // 1. Validate: Name must be unique
         if (projectRepository.existsByName(dto.name())) {
             throw new RuntimeException("Project with this name already exists: " + dto.name());
         }
 
-        // 2. Map DTO -> Entity
-        Project project = new Project();
-        project.setName(dto.name());
-        project.setDescription(dto.description());
-        project.setActive(true); // Always start as Active
-        project.setCreatedDate(LocalDateTime.now());
+        // 2. Map DTO -> Entity (Using the Mapper to save code!)
+        Project project = mapper.toEntity(dto);
+
+        // 3. Force Default Rules (if mapper didn't handle them)
+        // Ensure new projects are always active, even if DTO says false/null
+        project.setActive(true);
 
         projectRepository.save(project);
     }
 
     // --- READ ---
-    public ProjectDto getProjectById(Long id) {
+    public ProjectOutputDto getProjectById(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
-        return mapToDto(project);
+        return mapper.toOutputDto(project);
     }
 
-    public List<ProjectDto> getAllProjects() {
+    public List<ProjectOutputDto> getAllProjects() {
         return projectRepository.findAll().stream()
-                .map(this::mapToDto)
+                .map(mapper::toOutputDto)
                 .collect(Collectors.toList());
     }
 
     // specific method for UI Dropdowns (only shows active jobs)
-    public List<ProjectDto> getAllActiveProjects() {
+    public List<ProjectOutputDto> getAllActiveProjects() {
         return projectRepository.findByActiveTrue().stream()
-                .map(this::mapToDto)
+                .map(mapper::toOutputDto)
                 .collect(Collectors.toList());
     }
 
     // --- UPDATE ---
     @Transactional
-    public void updateProject(Long id, ProjectDto dto) {
+    public void updateProject(Long id, ProjectInputDto dto) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
 
@@ -67,7 +75,11 @@ public class ProjectService {
 
         project.setName(dto.name());
         project.setDescription(dto.description());
-        project.setActive(dto.active());
+
+        // BUG FIX: Avoid NullPointerException if DTO sends null
+        if (dto.active() != null) {
+            project.setActive(dto.active());
+        }
     }
 
     // --- CLOSE (ARCHIVE) ---
@@ -75,27 +87,21 @@ public class ProjectService {
     public void closeProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
-        project.setActive(false); // Dirty checking saves this
+        project.setActive(false);
     }
 
     // --- DELETE ---
+    @Transactional
     public void deleteProject(Long id) {
         if (!projectRepository.existsById(id)) {
             throw new RuntimeException("Cannot delete. Project not found: " + id);
         }
-        // TODO: In the future, check if this project has Transactions.
-        // If it does, we should BLOCK deletion to preserve financial history.
-        projectRepository.deleteById(id);
-    }
 
-    // --- MAPPER HELPER ---
-    private ProjectDto mapToDto(Project project) {
-        return new ProjectDto(
-                project.getId(),
-                project.getName(),
-                project.getDescription(),
-                project.isActive(),
-                project.getCreatedDate()
-        );
+        // SAFETY CHECK: Prevent deleting projects with financial history
+        if (transactionRepository.existsByProjectId(id)) {
+            throw new RuntimeException("Cannot delete project! It has associated transactions. Please 'Close' it instead to preserve financial history.");
+        }
+
+        projectRepository.deleteById(id);
     }
 }

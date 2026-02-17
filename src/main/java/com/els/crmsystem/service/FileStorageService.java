@@ -2,6 +2,7 @@ package com.els.crmsystem.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils; // Import Spring's utility
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,12 +17,11 @@ public class FileStorageService {
 
     private final Path fileStorageLocation;
 
-    // We inject the path from application.yaml
     public FileStorageService(@Value("${els.upload-dir}") String uploadDir) {
+        // Normalizes path (e.g. changes 'src/../uploads' to just 'uploads')
         this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
 
         try {
-            // Create the directory if it doesn't exist
             Files.createDirectories(this.fileStorageLocation);
         } catch (Exception ex) {
             throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
@@ -30,29 +30,33 @@ public class FileStorageService {
 
     public String storeFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            return null; // No file uploaded, that's fine
+            return null;
         }
 
-        try {
-            // 1. Clean the filename (security check)
-            String originalFileName = file.getOriginalFilename();
-            if (originalFileName == null) originalFileName = "unknown.jpg";
+        // 1. Clean the path (Sanitize filename)
+        // This converts "..\..\virus.exe" to "virus.exe"
+        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown_file");
 
-            // 2. Generate a unique name (to prevent overwriting)
-            // Example: "cable.jpg" -> "a1b2c3d4-cable.jpg"
+        try {
+            // 2. Security Check: Block attempts to write outside the directory
+            if (originalFileName.contains("..")) {
+                throw new RuntimeException("Filename contains invalid path sequence " + originalFileName);
+            }
+
+            // 3. Generate Unique Name
+            // Preserves the extension (e.g., .pdf, .xlsx, .mp4)
             String uniqueFileName = UUID.randomUUID().toString() + "-" + originalFileName;
 
-            // 3. Resolve the path
+            // 4. Resolve Path
             Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
 
-            // 4. Save the file (overwrite if exists, though UUID makes that unlikely)
+            // 5. Save
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            // 5. Return the filename (so we can save it in the DB)
             return uniqueFileName;
 
         } catch (IOException ex) {
-            throw new RuntimeException("Could not store file " + file.getOriginalFilename() + ". Please try again!", ex);
+            throw new RuntimeException("Could not store file " + originalFileName + ". Please try again!", ex);
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.els.crmsystem.controller.api;
 
-import com.els.crmsystem.dto.TransactionDto;
+import com.els.crmsystem.dto.input.TransactionInputDto;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<String> createTransaction(@Valid @RequestBody TransactionDto dto) {
+    public ResponseEntity<String> createTransaction(@Valid @RequestBody TransactionInputDto dto) {
         // Hardcoded 'admin' for now because we don't have a login system yet.
         // Make sure you CREATE a user with username 'admin' first!
         String currentUsername = "admin";

@@ -1,68 +1,102 @@
 package com.els.crmsystem.service;
 
-import com.els.crmsystem.dto.UserDto;
+import com.els.crmsystem.dto.input.UserInputDto;
+import com.els.crmsystem.dto.output.UserOutputDto;
 import com.els.crmsystem.entity.User;
 import com.els.crmsystem.enums.Role;
+import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Use Spring's Transactional
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Service class for managing Users.
+ * Handles registration, profile updates, and retrieval.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final EntityMapper mapper;
 
+    /**
+     * Registers a new user in the system.
+     * Throws RuntimeException if username or email is already taken.
+     */
     @Transactional
-    public void registerUser(String username, String password, String email) {
-        if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username is already taken: " + username);
+    public void registerUser(UserInputDto dto) {
+        // 1. Validation checks (using getters from DTO record)
+        if (userRepository.existsByUsername(dto.username())) {
+            throw new RuntimeException("Username is already taken: " + dto.username());
         }
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email is already registered: " + email);
+        if (userRepository.existsByEmail(dto.email())) {
+            throw new RuntimeException("Email is already registered: " + dto.email());
         }
 
-        User user = new User();
-        user.setUsername(username);
+        // 2. Convert DTO -> Entity using the Mapper
+        User user = mapper.toEntity(dto);
 
-        // TODO: SECURITY RISK! We must hash this password later using BCrypt.
-        // For now (Development only), plain text is allowed but dangerous.
-        user.setPassword(password);
-
-        user.setEmail(email);
-        user.setRole(Role.CLIENT); // Default role is safe
+        // 3. Any logic NOT handled by the mapper?
+        // Our mapper sets default Role.CLIENT and Enabled=true, so we are good.
+        // Later, we will add: user.setPassword(passwordEncoder.encode(dto.password()));
 
         userRepository.save(user);
     }
 
-    public UserDto findById(Long id) {
+    /**
+     * Finds a user by ID and converts it to a safe DTO.
+     */
+    public UserOutputDto findById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
-        return mapToDto(user);
+        return mapper.toOutputDto(user);
     }
 
-    public UserDto findByUsername(String username) {
+    /**
+     * Finds a user by Username and converts it to a safe DTO.
+     */
+    public UserOutputDto findByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
-        return mapToDto(user);
+        return mapper.toOutputDto(user);
     }
 
+    /**
+     * Updates an existing user's profile.
+     * Includes logic to prevent taking someone else's username/email.
+     */
     @Transactional
-    public void updateUser(Long id, String username, String email, Role role) {
+    public void updateUser(Long id, UserInputDto dto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
-        // TODO: Check if new username/email is already taken by ANOTHER user
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setRole(role);
-        // No need to call .save() here because @Transactional does "Dirty Checking"
+        // Validation
+        if (!Objects.equals(user.getUsername(), dto.username()) && userRepository.existsByUsername(dto.username())) {
+            throw new RuntimeException("Username '" + dto.username() + "' is already in use.");
+        }
+
+        if (!Objects.equals(user.getEmail(), dto.email()) && userRepository.existsByEmail(dto.email())) {
+            throw new RuntimeException("Email '" + dto.email() + "' is already in use.");
+        }
+
+        // Manual update is often safer than mapper here,
+        // because we don't want to accidentally overwrite ID or Password if the DTO is partial.
+        user.setUsername(dto.username());
+        user.setEmail(dto.email());
+        user.setPhoneNumber(dto.phoneNumber());
+        // Note: Password update usually requires a separate specific method for security.
     }
 
+    /**
+     * Deletes a user permanently.
+     */
+    @Transactional
     public void deleteById(Long id) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("Cannot delete. User not found: " + id);
@@ -70,19 +104,14 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    // Internal Helper to convert Entity -> DTO
-    private UserDto mapToDto(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole()
-        );
-    }
 
-    public List<UserDto> findAll() {
+    /**
+     * Returns a list of all users in the system as DTOs.
+     */
+    public List<UserOutputDto> findAll() {
         return userRepository.findAll().stream()
-                .map(this::mapToDto)
+                .map(mapper::toOutputDto)
                 .collect(Collectors.toList());
     }
+
 }

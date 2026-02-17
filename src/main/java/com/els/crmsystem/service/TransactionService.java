@@ -1,6 +1,6 @@
 package com.els.crmsystem.service;
 
-import com.els.crmsystem.dto.TransactionDto;
+import com.els.crmsystem.dto.input.TransactionInputDto;
 import com.els.crmsystem.entity.Project;
 import com.els.crmsystem.entity.Transaction;
 import com.els.crmsystem.entity.User;
@@ -20,7 +20,7 @@ public class TransactionService {
     private final UserRepository userRepository;
 
     @Transactional
-    public void createTransaction(TransactionDto dto, String username) {
+    public void createTransaction(TransactionInputDto dto, String username) {
 
         // 1. Find the ProjectService (Throw error if not found)
         Project project = projectRepository.findById(dto.projectId())
