@@ -32,13 +32,25 @@ public class SecurityConfig {
         http
                 // Define URL rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll() // Public pages
-                        .anyRequest().authenticated() // Everything else requires login
+                        // 1. PUBLIC ZONE (Login, CSS, JS, Images)
+                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
+
+                        // 2. RESTRICTED ZONE (Everything else)
+                        // ONLY users with role 'ADMIN' can enter these pages.
+                        // A 'CLIENT' (hacker) will be blocked here.
+                        .requestMatchers("/register", "/users/**").hasRole("ADMIN")
+                        .requestMatchers("/projects/**").hasAnyRole("ADMIN", "DIRECTOR")
+                        .requestMatchers("/transactions/**").hasAnyRole("ADMIN", "DIRECTOR")
+                        .requestMatchers("/uploads/**").hasAnyRole("ADMIN", "DIRECTOR")
+
+                        // 3. CATCH-ALL
+                        // If we forgot a URL, default to requiring login (safe backup)
+                        .anyRequest().authenticated()
                 )
                 // Define Login Page
                 .formLogin(form -> form
                         .loginPage("/login") // We will create this HTML file
-                        .defaultSuccessUrl("/projects", true) // Where to go after login
+                        .defaultSuccessUrl("/transactions", true) // Where to go after login
                         .permitAll()
                 )
                 // Define Logout

@@ -44,4 +44,11 @@ public class WebAuthController {
             return "register";
         }
     }
+
+    @GetMapping("/")
+    public String home() {
+        // If logged in, this goes to projects.
+        // If not logged in, Security Config will intercept and force /login.
+        return "redirect:/projects";
+    }
 }

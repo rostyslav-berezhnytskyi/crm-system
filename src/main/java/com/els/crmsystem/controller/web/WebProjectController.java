@@ -21,6 +21,8 @@ public class WebProjectController {
     public String showProjectsPage(Model model) {
         // Returns Output DTOs for the table
         model.addAttribute("projects", projectService.getAllProjects());
+
+        model.addAttribute("newProject", new ProjectInputDto(null, null, true));
         return "projects";
     }
 

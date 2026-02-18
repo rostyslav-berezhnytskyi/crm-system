@@ -21,6 +21,11 @@
             <a href="/projects" class="btn btn-outline-light btn-sm me-2">Projects</a>
             <a href="/transactions" class="btn btn-outline-light btn-sm">Transactions</a>
         </div>
+        <form th:action="@{/logout}" method="post" class="d-inline">
+            <button type="submit" class="btn btn-danger btn-sm">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </form>
     </div>
 </nav>
 
@@ -42,18 +47,15 @@
                     <h5 class="mb-0">Add New Project</h5>
                 </div>
                 <div class="card-body">
-                    <form action="/projects" method="post">
-                        <input type="hidden" name="active" value="true">
+                    <form th:action="@{/projects}" method="post" th:object="${newProject}">
 
-                        <div class="mb-3">
-                            <label class="form-label">Project Name</label>
-                            <input type="text" name="name" class="form-control" placeholder="e.g. Generator Box A1" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="3" placeholder="Details..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Create Project</button>
+                        <label>Project Name</label>
+                        <input type="text" th:field="*{name}" class="form-control" required>
+
+                        <label>Description</label>
+                        <textarea th:field="*{description}" class="form-control"></textarea>
+
+                        <button type="submit" class="btn btn-primary">Create Project</button>
                     </form>
                 </div>
             </div>
