@@ -7,6 +7,7 @@ import com.els.crmsystem.enums.Role;
 import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Use Spring's Transactional
 
@@ -24,6 +25,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final EntityMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Registers a new user in the system.
@@ -42,9 +44,9 @@ public class UserService {
         // 2. Convert DTO -> Entity using the Mapper
         User user = mapper.toEntity(dto);
 
-        // 3. Any logic NOT handled by the mapper?
-        // Our mapper sets default Role.CLIENT and Enabled=true, so we are good.
-        // Later, we will add: user.setPassword(passwordEncoder.encode(dto.password()));
+        // HERE IS THE MAGIC: Hash the password before saving
+        String hashedPassword = passwordEncoder.encode(dto.password());
+        user.setPassword(hashedPassword);
 
         userRepository.save(user);
     }

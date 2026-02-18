@@ -1,12 +1,12 @@
 package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.ProjectInputDto;
-import com.els.crmsystem.dto.output.ProjectOutputDto;
 import com.els.crmsystem.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -16,49 +16,48 @@ public class WebProjectController {
 
     private final ProjectService projectService;
 
-    // 1. Show the Page (List + Create Form)
+    // 1. Show List & Create Form
     @GetMapping("/projects")
     public String showProjectsPage(Model model) {
-        // We put the list of projects into the model so Thymeleaf can draw the table
+        // Returns Output DTOs for the table
         model.addAttribute("projects", projectService.getAllProjects());
-        return "projects"; // Looks for projects.html
+        return "projects";
     }
 
-    // 2. Handle "Create Project" Form
+    // 2. Handle Create (Input DTO)
     @PostMapping("/projects")
-    public String createProject(ProjectInputDto projectInputDto, Model model) {
+    public String createProject(@ModelAttribute ProjectInputDto projectDto, Model model) {
         try {
-            projectService.createProject(projectInputDto);
-            return "redirect:/projects?success"; // Redirect to clear the form
+            projectService.createProject(projectDto);
+            return "redirect:/projects?success";
         } catch (RuntimeException e) {
-            // If error (duplicate name), reload the page WITH the error message
             model.addAttribute("error", e.getMessage());
-            // Important: We must reload the list, otherwise the table will be empty!
+            // Important: reload the list so the table isn't empty on error
             model.addAttribute("projects", projectService.getAllProjects());
             return "projects";
         }
     }
 
-    // 3. Show the Edit Form (GET /projects/edit/1)
+    // 3. Show Edit Form (Get by ID)
     @GetMapping("/projects/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-        // Fetch the existing project so we can pre-fill the form
-        ProjectOutputDto project = projectService.getProjectById(id);
-        model.addAttribute("project", project);
-        return "project-edit"; // We will create this file next
+        // Returns Output DTO to pre-fill the form
+        model.addAttribute("project", projectService.getProjectById(id));
+        return "project-edit";
     }
 
-    // 4. Handle the Update (POST /projects/update/1)
+    // 4. Handle Update (Input DTO)
     @PostMapping("/projects/update/{id}")
-    public String updateProject(@PathVariable Long id, ProjectInputDto projectInputDto, Model model) {
+    public String updateProject(@PathVariable Long id,
+                                @ModelAttribute ProjectInputDto projectDto,
+                                Model model) {
         try {
-            // We pass the ID from the URL and the data from the Form
-            projectService.updateProject(id, projectInputDto);
-            return "redirect:/projects"; // Success? Go back to the list
+            projectService.updateProject(id, projectDto);
+            return "redirect:/projects";
         } catch (RuntimeException e) {
-            // Error? Reload the Edit page and show the message
             model.addAttribute("error", e.getMessage());
-            model.addAttribute("project", projectInputDto); // Keep the user's input
+            // On error, we need to keep the ID so the form knows which one we are editing
+            model.addAttribute("project", projectService.getProjectById(id));
             return "project-edit";
         }
     }

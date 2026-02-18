@@ -1,42 +1,47 @@
 package com.els.crmsystem.controller.web;
 
+import com.els.crmsystem.dto.input.UserInputDto;
 import com.els.crmsystem.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller; // Note: Standard @Controller
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
-@Controller // This means: "I return HTML pages"
+@Controller
 @RequiredArgsConstructor
 public class WebAuthController {
 
     private final UserService userService;
 
-    // 1. Show the Page (Browser: GET /register)
     @GetMapping("/register")
-    public String showRegistrationForm() {
-        // This tells Spring: "Go look for src/main/resources/templates/register.html"
+    public String showRegistrationForm(Model model) {
+        // FIX: We must send an empty object to the form!
+        // The DTO has 4 fields: username, password, email, phoneNumber
+        model.addAttribute("user", new UserInputDto(null, null, null, null));
         return "register";
     }
 
-    // 2. Handle the Form Submit (Browser: POST /register)
-//    @PostMapping("/register")
-//    public String registerUser(@RequestParam String username,
-//                               @RequestParam String email,
-//                               @RequestParam String password,
-//                               @RequestParam String phoneNumber, Model model) {
-//        try {
-//            // Call your Service (The logic you already wrote)
-//            userService.registerUser(username, password, email, phoneNumber);
-//
-//            // If successful, redirect to same page with a success flag
-//            return "redirect:/register?success";
-//        } catch (RuntimeException e) {
-//            // If error (e.g., duplicate user), reload page with error message
-//            model.addAttribute("error", e.getMessage());
-//            return "register";
-//        }
-//    }
+    @PostMapping("/register")
+    public String registerUser(@ModelAttribute("user") @Valid UserInputDto userDto,
+                               BindingResult bindingResult,
+                               Model model) {
+
+        // 1. Check for Validation Errors (e.g., empty password)
+        if (bindingResult.hasErrors()) {
+            return "register"; // Reload page to show errors
+        }
+
+        try {
+            userService.registerUser(userDto);
+            return "redirect:/login?registered"; // Success! Go to login.
+        } catch (RuntimeException e) {
+            // 2. Handle "User already exists" error
+            model.addAttribute("error", e.getMessage());
+            return "register";
+        }
+    }
 }

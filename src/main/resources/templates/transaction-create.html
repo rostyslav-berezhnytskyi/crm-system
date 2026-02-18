@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>ELS CRM - New Transaction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>body { background-color: #f4f6f9; }</style>
+</head>
+<body>
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📝 New Transaction</h5>
+                </div>
+                <div class="card-body">
+
+                    <div th:if="${error}" class="alert alert-danger">
+                        ⚠️ <span th:text="${error}"></span>
+                    </div>
+
+                    <form th:action="@{/transactions}" th:object="${transaction}" method="post" enctype="multipart/form-data">
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Project</label>
+                                <select th:field="*{projectId}" class="form-select" required>
+                                    <option value="" disabled selected>-- Select a Project --</option>
+                                    <option th:each="p : ${projects}"
+                                            th:value="${p.id}"
+                                            th:text="${p.name}">
+                                        Solar Station 50kW
+                                    </option>
+                                </select>
+                                <div class="text-danger small" th:if="${#fields.hasErrors('projectId')}" th:errors="*{projectId}"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Type</label>
+                                <select th:field="*{type}" class="form-select" required>
+                                    <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Category</label>
+                                <select th:field="*{category}" class="form-select" required>
+                                    <option th:each="c : ${categories}" th:value="${c}" th:text="${c}"></option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Amount (₴)</label>
+                                <input type="number" step="0.01" th:field="*{amount}" class="form-control" placeholder="0.00" required>
+                                <div class="text-danger small" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Payment Method</label>
+                                <select th:field="*{paymentMethod}" class="form-select" required>
+                                    <option th:each="m : ${paymentMethods}" th:value="${m}" th:text="${m}"></option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Date (Leave empty for TODAY)</label>
+                                <input type="datetime-local" th:field="*{date}" class="form-control">
+                                <small class="text-muted">If you bought this yesterday, pick the correct date here.</small>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea th:field="*{description}" class="form-control" rows="3" placeholder="e.g. Bought 100m of cable for grid connection"></textarea>
+                                <div class="text-danger small" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">🧾 Receipt / Invoice (PDF/Image)</label>
+                                <input type="file" name="receiptFile" class="form-control" accept="image/*,.pdf">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">📸 Item Photo (Proof)</label>
+                                <input type="file" name="itemImageFile" class="form-control" accept="image/*">
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="/transactions" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-5">Save Transaction</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

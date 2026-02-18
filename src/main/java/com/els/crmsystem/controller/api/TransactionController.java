@@ -4,6 +4,7 @@ import com.els.crmsystem.dto.input.TransactionInputDto;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType; // Import this!
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,13 +15,19 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @PostMapping
-    public ResponseEntity<String> createTransaction(@Valid @RequestBody TransactionInputDto dto) {
-        // Hardcoded 'admin' for now because we don't have a login system yet.
-        // Make sure you CREATE a user with username 'admin' first!
+    /**
+     * Creates a transaction via API.
+     * MUST use 'multipart/form-data' because of the file uploads.
+     * We use @ModelAttribute to bind form fields + files to the DTO.
+     */
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> createTransaction(@Valid @ModelAttribute TransactionInputDto dto) {
+
+        // Hardcoded 'admin' for now (Make sure this user exists in DB!)
         String currentUsername = "admin";
 
         transactionService.createTransaction(dto, currentUsername);
-        return ResponseEntity.ok("Transaction saved!");
+
+        return ResponseEntity.ok("Transaction saved successfully!");
     }
 }
