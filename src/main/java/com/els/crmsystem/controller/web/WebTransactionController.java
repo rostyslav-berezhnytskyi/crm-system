@@ -4,6 +4,7 @@ import com.els.crmsystem.dto.input.TransactionInputDto;
 import com.els.crmsystem.enums.PaymentMethod;
 import com.els.crmsystem.enums.TransactionCategory;
 import com.els.crmsystem.enums.TransactionType;
+import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.service.ProjectService;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
@@ -24,6 +25,7 @@ public class WebTransactionController {
 
     private final TransactionService transactionService;
     private final ProjectService projectService;
+    private final EntityMapper mapper;
 
     // --- 1. LIST PAGE ---
     @GetMapping("/transactions")
@@ -79,6 +81,46 @@ public class WebTransactionController {
     public String deleteTransaction(@PathVariable Long id) {
         transactionService.deleteTransaction(id);
         return "redirect:/transactions";
+    }
+
+    // --- 5. SHOW EDIT FORM ---
+    @GetMapping("/transactions/edit/{id}")
+    public String showEditForm(@PathVariable Long id, Model model) {
+        // 1. Get Entity
+        var t = transactionService.getTransactionById(id);
+
+        // 2. Use Mapper (Clean!)
+        TransactionInputDto formDto = mapper.toInputDto(t);
+
+        // 3. Add to Model
+        model.addAttribute("transaction", formDto);
+        model.addAttribute("transactionId", id);
+
+        // 4. Pass existing file URLs separately (for the "View Current Receipt" link)
+        model.addAttribute("currentReceipt", t.getReceiptUrl());
+        model.addAttribute("currentItemImage", t.getItemImageUrl());
+
+        prepareDropdownData(model);
+
+        return "transaction-edit";
+    }
+
+    // --- 6. HANDLE UPDATE ---
+    @PostMapping("/transactions/update/{id}")
+    public String updateTransaction(@PathVariable Long id,
+                                    @Valid @ModelAttribute("transaction") TransactionInputDto dto,
+                                    BindingResult bindingResult,
+                                    Model model,
+                                    Principal principal) {
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("transactionId", id);
+            prepareDropdownData(model);
+            return "transaction-edit";
+        }
+
+        transactionService.updateTransaction(id, dto, principal.getName());
+        return "redirect:/transactions?updated";
     }
 
     // --- HELPER: Loads Dropdown Data ---

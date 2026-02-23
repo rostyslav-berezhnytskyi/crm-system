@@ -1,6 +1,7 @@
 package com.els.crmsystem.mapper;
 
 import com.els.crmsystem.dto.input.ProjectInputDto;
+import com.els.crmsystem.dto.input.TransactionInputDto;
 import com.els.crmsystem.dto.input.UserInputDto;
 import com.els.crmsystem.dto.output.ProjectOutputDto;
 import com.els.crmsystem.dto.output.TransactionOutputDto;
@@ -86,6 +87,24 @@ public class EntityMapper {
                 transaction.getDate(),
                 transaction.getReceiptUrl(),
                 transaction.getItemImageUrl()
+        );
+    }
+
+    public TransactionInputDto toInputDto(Transaction transaction) {
+        if (transaction == null) return null;
+
+        // We pass NULL for the files, because we can't turn a saved file back into a "MultipartFile" object.
+        // The controller handles showing the "Current File" link separately.
+        return new TransactionInputDto(
+                transaction.getProject().getId(),   // Extract ID for the dropdown
+                transaction.getType(),
+                transaction.getAmount(),
+                transaction.getCategory(),
+                transaction.getPaymentMethod(),
+                transaction.getDescription(),
+                transaction.getDate(),
+                null, // receiptFile (Keep empty)
+                null  // itemImageFile (Keep empty)
         );
     }
 }
