@@ -66,7 +66,8 @@ public class SecurityConfig {
     // 3. Connect UserLoader to Security
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
 
         // Line 2: Sets the Password Encryptor
         authProvider.setPasswordEncoder(passwordEncoder());

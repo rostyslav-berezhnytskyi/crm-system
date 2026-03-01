@@ -51,6 +51,15 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Stores the file path to the user's uploaded profile picture.
+     */
+    @Column(name = "photo_url")
+    private String photoUrl;
+
+    @Column(name = "telegram_id", length = 50)
+    private String telegramId;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

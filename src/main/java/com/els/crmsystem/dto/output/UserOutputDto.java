@@ -12,5 +12,7 @@ public record UserOutputDto(
         String email,
         String phoneNumber,
         Role role,
-        boolean enabled
+        boolean enabled,
+        String photoUrl,
+        String telegramId
 ) {}

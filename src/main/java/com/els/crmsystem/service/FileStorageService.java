@@ -29,31 +29,42 @@ public class FileStorageService {
     }
 
     public String saveFile(MultipartFile file) {
+        return saveFileToSubfolder(file, "");
+    }
+
+    public String saveFileToSubfolder(MultipartFile file, String subfolder) {
         if (file == null || file.isEmpty()) {
             return null;
         }
 
-        // 1. Clean the path (Sanitize filename)
-        // This converts "..\..\virus.exe" to "virus.exe"
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown_file");
 
         try {
-            // 2. Security Check: Block attempts to write outside the directory
+            // Security Check
             if (originalFileName.contains("..")) {
                 throw new RuntimeException("Filename contains invalid path sequence " + originalFileName);
             }
 
+            // 1. Create the specific subfolder path (e.g., uploads/users/1)
+            Path targetDirectory = this.fileStorageLocation.resolve(subfolder).normalize();
+
+            // 2. Automatically create the folder on the Windows/Linux hard drive if it doesn't exist
+            Files.createDirectories(targetDirectory);
+
             // 3. Generate Unique Name
-            // Preserves the extension (e.g., .pdf, .xlsx, .mp4)
             String uniqueFileName = UUID.randomUUID().toString() + "-" + originalFileName;
 
-            // 4. Resolve Path
-            Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
+            // 4. Resolve exact file path
+            Path targetLocation = targetDirectory.resolve(uniqueFileName);
 
-            // 5. Save
+            // 5. Save the file
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            return uniqueFileName;
+            // 6. Return the relative path so the DB saves "users/1/photo.jpg"
+            if (subfolder.isEmpty()) {
+                return uniqueFileName;
+            }
+            return subfolder + "/" + uniqueFileName;
 
         } catch (IOException ex) {
             throw new RuntimeException("Could not store file " + originalFileName + ". Please try again!", ex);

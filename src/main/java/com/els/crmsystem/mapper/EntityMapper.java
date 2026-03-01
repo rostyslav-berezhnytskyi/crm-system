@@ -27,7 +27,9 @@ public class EntityMapper {
                 user.getEmail(),
                 user.getPhoneNumber(),
                 user.getRole(),
-                user.isEnabled()
+                user.isEnabled(),
+                user.getPhotoUrl(),
+                user.getTelegramId()
         );
     }
 

@@ -1,5 +1,6 @@
 package com.els.crmsystem.service;
 
+import com.els.crmsystem.dto.input.UserEditDto;
 import com.els.crmsystem.dto.input.UserInputDto;
 import com.els.crmsystem.dto.output.UserOutputDto;
 import com.els.crmsystem.entity.User;
@@ -26,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final EntityMapper mapper;
     private final PasswordEncoder passwordEncoder;
+    private final FileStorageService fileStorageService;
 
     /**
      * Registers a new user in the system.
@@ -74,25 +76,39 @@ public class UserService {
      * Includes logic to prevent taking someone else's username/email.
      */
     @Transactional
-    public void updateUser(Long id, UserInputDto dto) {
+    public void adminUpdateUser(Long id, UserEditDto dto, org.springframework.web.multipart.MultipartFile photo) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
-        // Validation
+        // 1. Validation for unique username/email
         if (!Objects.equals(user.getUsername(), dto.username()) && userRepository.existsByUsername(dto.username())) {
-            throw new RuntimeException("Username '" + dto.username() + "' is already in use.");
+            throw new RuntimeException("Username is already in use.");
         }
-
         if (!Objects.equals(user.getEmail(), dto.email()) && userRepository.existsByEmail(dto.email())) {
-            throw new RuntimeException("Email '" + dto.email() + "' is already in use.");
+            throw new RuntimeException("Email is already in use.");
         }
 
-        // Manual update is often safer than mapper here,
-        // because we don't want to accidentally overwrite ID or Password if the DTO is partial.
+        // 2. Update basic fields
         user.setUsername(dto.username());
         user.setEmail(dto.email());
         user.setPhoneNumber(dto.phoneNumber());
-        // Note: Password update usually requires a separate specific method for security.
+        user.setTelegramId(dto.telegramId());
+        user.setRole(dto.role());
+        user.setEnabled(dto.enabled());
+
+        // 3. Only hash and update password IF the admin typed a new one
+        if (dto.newPassword() != null && !dto.newPassword().isBlank()) {
+            if (dto.newPassword().length() < 6) {
+                throw new RuntimeException("Password must be at least 6 characters.");
+            }
+            user.setPassword(passwordEncoder.encode(dto.newPassword()));
+        }
+
+        // 4. Save Photo into the specific user folder
+        if (photo != null && !photo.isEmpty()) {
+            String photoPath = fileStorageService.saveFileToSubfolder(photo, "users/" + user.getId());
+            user.setPhotoUrl(photoPath);
+        }
     }
 
     /**

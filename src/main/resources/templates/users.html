@@ -43,17 +43,26 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="user : ${users}">
+                <tr th:each="user : ${users}" class="align-middle">
                     <td th:text="${user.id}">1</td>
-                    <td class="fw-bold" th:text="${user.username}">rostik</td>
+                    <td>
+                        <a th:href="@{'/uploads/' + ${user.photoUrl}}" target="_blank">
+                            <img th:if="${user.photoUrl != null}" th:src="@{'/uploads/' + ${user.photoUrl}}"
+                                 class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover; border: 1px solid #ccc;">
+                        </a>
+                        <span class="fw-bold" th:text="${user.username}">rostik</span>
+                    </td>
                     <td th:text="${user.email}">mail@els.com</td>
                     <td>
-                            <span th:class="${user.role.name() == 'ADMIN'} ? 'badge bg-danger' : 'badge bg-primary'"
-                                  th:text="${user.role}">ADMIN</span>
+                        <span th:class="${user.role.name() == 'ADMIN'} ? 'badge bg-danger' : 'badge bg-primary'"
+                              th:text="${user.role}">ADMIN</span>
                     </td>
                     <td>
                         <span th:if="${user.enabled}" class="badge bg-success">Active</span>
                         <span th:unless="${user.enabled}" class="badge bg-secondary">Disabled</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/users/edit/{id}(id=${user.id})}" class="btn btn-sm btn-outline-dark">Edit</a>
                     </td>
                 </tr>
                 </tbody>

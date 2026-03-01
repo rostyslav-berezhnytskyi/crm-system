@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -36,6 +38,9 @@ public class Project {
 
     @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectMedia> media = new ArrayList<>();
 
     // --- LIFECYCLE HOOKS ---
 
