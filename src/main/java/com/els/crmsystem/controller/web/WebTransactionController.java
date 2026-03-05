@@ -32,7 +32,7 @@ public class WebTransactionController {
     public String showTransactionsPage(Model model) {
         // Send the list of transactions to the table
         model.addAttribute("transactions", transactionService.getAllTransactions());
-        return "transactions"; // connects to templates/transactions.html
+        return "transaction/transactions"; // connects to templates/transactions.html
     }
 
     // --- 2. CREATE FORM ---
@@ -46,7 +46,7 @@ public class WebTransactionController {
         // Load data for Dropdowns (Projects, Enums)
         prepareDropdownData(model);
 
-        return "transaction-create"; // connects to templates/transaction-create.html
+        return "transaction/transaction-create"; // connects to templates/transaction-create.html
     }
 
     // --- 3. HANDLE CREATE ACTION ---
@@ -59,7 +59,7 @@ public class WebTransactionController {
         // If validation fails (e.g., negative amount), reload the page with errors
         if (bindingResult.hasErrors()) {
             prepareDropdownData(model); // Must reload dropdowns or the page crashes!
-            return "transaction-create";
+            return "transaction/transaction-create";
         }
 
         try {
@@ -72,7 +72,7 @@ public class WebTransactionController {
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
             prepareDropdownData(model);
-            return "transaction-create";
+            return "transaction/transaction-create";
         }
     }
 
@@ -102,7 +102,7 @@ public class WebTransactionController {
 
         prepareDropdownData(model);
 
-        return "transaction-edit";
+        return "transaction/transaction-edit";
     }
 
     // --- 6. HANDLE UPDATE ---
@@ -116,7 +116,7 @@ public class WebTransactionController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("transactionId", id);
             prepareDropdownData(model);
-            return "transaction-edit";
+            return "transaction/transaction-edit";
         }
 
         transactionService.updateTransaction(id, dto, principal.getName());

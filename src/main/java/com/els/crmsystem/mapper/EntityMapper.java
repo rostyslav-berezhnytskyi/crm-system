@@ -3,12 +3,8 @@ package com.els.crmsystem.mapper;
 import com.els.crmsystem.dto.input.ProjectInputDto;
 import com.els.crmsystem.dto.input.TransactionInputDto;
 import com.els.crmsystem.dto.input.UserInputDto;
-import com.els.crmsystem.dto.output.ProjectOutputDto;
-import com.els.crmsystem.dto.output.TransactionOutputDto;
-import com.els.crmsystem.dto.output.UserOutputDto;
-import com.els.crmsystem.entity.Project;
-import com.els.crmsystem.entity.Transaction;
-import com.els.crmsystem.entity.User;
+import com.els.crmsystem.dto.output.*;
+import com.els.crmsystem.entity.*;
 import com.els.crmsystem.enums.Role;
 import org.springframework.stereotype.Component;
 
@@ -51,24 +47,51 @@ public class EntityMapper {
 
     public ProjectOutputDto toOutputDto(Project project) {
         if (project == null) return null;
+
         return new ProjectOutputDto(
                 project.getId(),
                 project.getName(),
                 project.getDescription(),
                 project.isActive(),
-                project.getCreatedDate()
+                project.getCreatedDate(),
+
+                // Safely extract names if the relationships exist
+                project.getClient() != null ? project.getClient().getId() : null,
+                project.getClient() != null ? project.getClient().getName() : null,
+
+                project.getInstaller() != null ? project.getInstaller().getId() : null,
+                project.getInstaller() != null ? project.getInstaller().getName() : null,
+
+                project.getEquipmentDealer() != null ? project.getEquipmentDealer().getId() : null,
+                project.getEquipmentDealer() != null ? project.getEquipmentDealer().getName() : null,
+
+                // Safely extract embedded address
+                project.getAddress() != null ? project.getAddress().getText() : null,
+                project.getAddress() != null ? project.getAddress().getLatitude() : null,
+                project.getAddress() != null ? project.getAddress().getLongitude() : null
         );
     }
 
     public Project toEntity(ProjectInputDto dto) {
         if (dto == null) return null;
+
         Project project = new Project();
         project.setName(dto.name());
         project.setDescription(dto.description());
-        // Default active status handled in Service or Entity logic
+
         if (dto.active() != null) {
             project.setActive(dto.active());
         }
+
+        // Map the Embedded Address
+        if (dto.addressText() != null) {
+            com.els.crmsystem.entity.Address address = new com.els.crmsystem.entity.Address();
+            address.setText(dto.addressText());
+            address.setLatitude(dto.latitude());
+            address.setLongitude(dto.longitude());
+            project.setAddress(address);
+        }
+
         return project;
     }
 
@@ -107,6 +130,59 @@ public class EntityMapper {
                 transaction.getDate(),
                 null, // receiptFile (Keep empty)
                 null  // itemImageFile (Keep empty)
+        );
+    }
+
+    // ==========================================
+    // COMPANY MAPPINGS
+    // ==========================================
+
+    public CompanyOutputDto toOutputDto(Company company) {
+        if (company == null) return null;
+        return new CompanyOutputDto(
+                company.getId(),
+                company.getName(),
+                company.getWebsite(),
+                company.getMainPhone(),
+                company.getEmail(),
+                company.getNotes(),
+                company.isActive()
+        );
+    }
+
+    // ==========================================
+    // CONTACT MAPPINGS
+    // ==========================================
+
+    public ContactOutputDto toOutputDto(Contact contact) {
+        if (contact == null) return null;
+        return new ContactOutputDto(
+                contact.getId(),
+                contact.getCompany() != null ? contact.getCompany().getId() : null,
+                contact.getCompany() != null ? contact.getCompany().getName() : null,
+                contact.getName(),
+                contact.getRole(),
+                contact.getPhone(),
+                contact.getEmail(),
+                contact.getNotes(),
+                contact.isActive(),
+                contact.getLastContactDate()
+        );
+    }
+
+    // ==========================================
+    // PROJECT MEDIA MAPPINGS
+    // ==========================================
+
+    public ProjectMediaOutputDto toOutputDto(com.els.crmsystem.entity.ProjectMedia media) {
+        if (media == null) return null;
+
+        return new ProjectMediaOutputDto(
+                media.getId(),
+                media.getFileUrl(),
+                media.getFileType(),
+                media.getDescription(),
+                media.getUploadedAt()
         );
     }
 }

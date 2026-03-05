@@ -26,6 +26,9 @@ public class ProjectMedia {
     @Column(name = "file_type", length = 50)
     private String fileType; // e.g., "IMAGE", "VIDEO"
 
+    @Column(length = 1000)
+    private String description;
+
     @Column(name = "uploaded_at", nullable = false, updatable = false)
     private LocalDateTime uploadedAt;
 

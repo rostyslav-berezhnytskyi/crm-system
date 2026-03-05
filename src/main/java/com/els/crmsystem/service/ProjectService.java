@@ -2,8 +2,11 @@ package com.els.crmsystem.service;
 
 import com.els.crmsystem.dto.input.ProjectInputDto;
 import com.els.crmsystem.dto.output.ProjectOutputDto;
+import com.els.crmsystem.entity.Address;
 import com.els.crmsystem.entity.Project;
 import com.els.crmsystem.mapper.EntityMapper;
+import com.els.crmsystem.repository.CompanyRepository;
+import com.els.crmsystem.repository.ContactRepository;
 import com.els.crmsystem.repository.ProjectRepository;
 import com.els.crmsystem.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,36 +16,84 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Service for managing Projects (Installations, Repairs, etc.).
- */
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final TransactionRepository transactionRepository;
+    private final ContactRepository contactRepository;
+    private final CompanyRepository companyRepository;
     private final EntityMapper mapper;
 
-    // --- CREATE ---
     @Transactional
     public void createProject(ProjectInputDto dto) {
-        // 1. Validate: Name must be unique
         if (projectRepository.existsByName(dto.name())) {
             throw new RuntimeException("Project with this name already exists: " + dto.name());
         }
 
-        // 2. Map DTO -> Entity (Using the Mapper to save code!)
         Project project = mapper.toEntity(dto);
-
-        // 3. Force Default Rules (if mapper didn't handle them)
-        // Ensure new projects are always active, even if DTO says false/null
         project.setActive(true);
+
+        attachRelationships(project, dto);
 
         projectRepository.save(project);
     }
 
-    // --- READ ---
+    @Transactional
+    public void updateProject(Long id, ProjectInputDto dto) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
+
+        if (!project.getName().equals(dto.name()) && projectRepository.existsByName(dto.name())) {
+            throw new RuntimeException("Project name already taken: " + dto.name());
+        }
+
+        project.setName(dto.name());
+        project.setDescription(dto.description());
+
+        if (dto.active() != null) {
+            project.setActive(dto.active());
+        }
+
+        // Update Address
+        if (project.getAddress() == null) {
+            project.setAddress(new Address());
+        }
+        project.getAddress().setText(dto.addressText());
+        project.getAddress().setLatitude(dto.latitude());
+        project.getAddress().setLongitude(dto.longitude());
+
+        attachRelationships(project, dto);
+
+        projectRepository.save(project);
+    }
+
+    // --- Helper Method to keep code clean ---
+    private void attachRelationships(Project project, ProjectInputDto dto) {
+        if (dto.clientId() != null) {
+            project.setClient(contactRepository.findById(dto.clientId())
+                    .orElseThrow(() -> new RuntimeException("Client not found")));
+        } else {
+            project.setClient(null);
+        }
+
+        if (dto.installerId() != null) {
+            project.setInstaller(contactRepository.findById(dto.installerId())
+                    .orElseThrow(() -> new RuntimeException("Installer not found")));
+        } else {
+            project.setInstaller(null);
+        }
+
+        if (dto.equipmentDealerId() != null) {
+            project.setEquipmentDealer(companyRepository.findById(dto.equipmentDealerId())
+                    .orElseThrow(() -> new RuntimeException("Dealer not found")));
+        } else {
+            project.setEquipmentDealer(null);
+        }
+    }
+
+    // --- READ / DELETE METHODS  ---
     public ProjectOutputDto getProjectById(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
@@ -55,34 +106,12 @@ public class ProjectService {
                 .collect(Collectors.toList());
     }
 
-    // specific method for UI Dropdowns (only shows active jobs)
     public List<ProjectOutputDto> getAllActiveProjects() {
         return projectRepository.findByActiveTrue().stream()
                 .map(mapper::toOutputDto)
                 .collect(Collectors.toList());
     }
 
-    // --- UPDATE ---
-    @Transactional
-    public void updateProject(Long id, ProjectInputDto dto) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
-
-        // Only check for duplicate name if the name is actually changing
-        if (!project.getName().equals(dto.name()) && projectRepository.existsByName(dto.name())) {
-            throw new RuntimeException("Project name already taken: " + dto.name());
-        }
-
-        project.setName(dto.name());
-        project.setDescription(dto.description());
-
-        // BUG FIX: Avoid NullPointerException if DTO sends null
-        if (dto.active() != null) {
-            project.setActive(dto.active());
-        }
-    }
-
-    // --- CLOSE (ARCHIVE) ---
     @Transactional
     public void closeProject(Long id) {
         Project project = projectRepository.findById(id)
@@ -90,18 +119,14 @@ public class ProjectService {
         project.setActive(false);
     }
 
-    // --- DELETE ---
     @Transactional
     public void deleteProject(Long id) {
         if (!projectRepository.existsById(id)) {
             throw new RuntimeException("Cannot delete. Project not found: " + id);
         }
-
-        // SAFETY CHECK: Prevent deleting projects with financial history
         if (transactionRepository.existsByProjectId(id)) {
             throw new RuntimeException("Cannot delete project! It has associated transactions. Please 'Close' it instead to preserve financial history.");
         }
-
         projectRepository.deleteById(id);
     }
 }

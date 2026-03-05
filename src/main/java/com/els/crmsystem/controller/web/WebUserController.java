@@ -20,7 +20,7 @@ public class WebUserController {
     @PreAuthorize("hasRole('ADMIN')") // Double security check
     public String showUsersPage(Model model) {
         model.addAttribute("users", userService.findAll());
-        return "users";
+        return "user/users";
     }
 
     @GetMapping("/users/edit/{id}")
@@ -28,7 +28,7 @@ public class WebUserController {
     public String showEditUserPage(@PathVariable Long id, Model model) {
         model.addAttribute("user", userService.findById(id));
         model.addAttribute("roles", Role.values()); // Passes ADMIN, DIRECTOR, etc. to the dropdown
-        return "edit-user";
+        return "user/edit-user";
     }
 
     @PostMapping("/users/edit/{id}")

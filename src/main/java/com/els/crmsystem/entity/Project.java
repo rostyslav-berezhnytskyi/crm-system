@@ -42,6 +42,21 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMedia> media = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id")
+    private Contact client;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "installer_id")
+    private Contact installer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipment_dealer_id")
+    private Company equipmentDealer;
+
+    @Embedded
+    private Address address;
+
     // --- LIFECYCLE HOOKS ---
 
     @PrePersist

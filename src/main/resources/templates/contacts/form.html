@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ELS CRM - Форма контакту</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>body { background-color: #f4f6f9; }</style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand fw-bold" href="/">ELS CRM</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="/projects">Проєкти</a></li>
+                <li class="nav-item"><a class="nav-link" href="/transactions">Транзакції</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/contacts">Контакти</a></li>
+                <li class="nav-item"><a class="nav-link" href="/companies">Компанії</a></li>
+                <li class="nav-item"><a class="nav-link" href="/users">Співробітники</a></li>
+            </ul>
+            <form th:action="@{/logout}" method="post" class="d-flex">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="bi bi-box-arrow-right"></i> Вийти
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0" th:text="${contactId == null ? 'Створити новий контакт' : 'Редагувати контакт'}"></h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="${contactId == null ? '/contacts' : '/contacts/edit/' + contactId}"
+                          th:object="${contact}" method="post">
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Ім'я контакту *</label>
+                                <input type="text" class="form-control" th:field="*{name}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Роль *</label>
+                                <select class="form-select" th:field="*{role}" required>
+                                    <option th:each="r : ${roles}"
+                                            th:value="${r}"
+                                            th:text="${r.getUkrainianName()}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Компанія <span class="text-muted fw-normal">(Необов'язково)</span></label>
+                            <select class="form-select" th:field="*{companyId}">
+                                <option value="">-- Без компанії (Незалежний) --</option>
+                                <option th:each="comp : ${companies}"
+                                        th:value="${comp.id()}"
+                                        th:text="${comp.name()}"></option>
+                            </select>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Номер телефону</label>
+                                <input type="text" class="form-control" th:field="*{phone}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Електронна пошта</label>
+                                <input type="email" class="form-control" th:field="*{email}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Нотатки</label>
+                            <textarea class="form-control" th:field="*{notes}" rows="3" placeholder="Спеціальні вимоги, вподобання щодо спілкування..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a href="/contacts" class="btn btn-secondary me-2">Скасувати</a>
+                            <button type="submit" class="btn btn-success">Зберегти контакт</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

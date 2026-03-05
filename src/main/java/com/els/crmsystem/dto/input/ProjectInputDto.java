@@ -13,5 +13,16 @@ public record ProjectInputDto(
 
         // Allowed for Updates (e.g., closing a project)
         // Default to true if null
-        Boolean active
+        Boolean active,
+
+        // --- RELATIONAL IDs ---
+        Long clientId,
+        Long installerId,
+        Long equipmentDealerId,
+
+        // --- ADDRESS FIELDS ---
+        @NotBlank(message = "Address is required")
+        String addressText,
+        Double latitude,
+        Double longitude
 ) {}
