@@ -39,7 +39,7 @@ public class SecurityConfig {
                         // ONLY users with role 'ADMIN' can enter these pages.
                         // A 'CLIENT' (hacker) will be blocked here.
 //                        .requestMatchers("/register", "/users/**").hasRole("ADMIN")
-                        .requestMatchers("/register", "/users/**").permitAll()
+                        .requestMatchers("/register", "/users/**").hasRole("ADMIN")
                         .requestMatchers("/projects/**").hasAnyRole("ADMIN", "DIRECTOR")
                         .requestMatchers("/transactions/**").hasAnyRole("ADMIN", "DIRECTOR")
                         .requestMatchers("/uploads/**").hasAnyRole("ADMIN", "DIRECTOR")
