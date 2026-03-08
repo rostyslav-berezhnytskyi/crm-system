@@ -13,15 +13,14 @@ services:
     restart: always
 
   app:
-    build: .             # This tells Docker to look for the Dockerfile we just made
+    build: patton2510/els-crm:latest
     container_name: crm-app
     ports:
-      - "8080:8080"      # Maps the app to localhost:8080 on your PC
+      - "8082:8080"      # Maps the app to localhost:8080 on your PC
     environment:
-      # CRITICAL: We changed 'localhost' to 'postgres' here so it finds the DB inside the Docker network!
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     volumes:
       # Saves uploaded receipts/photos to your real hard drive so they aren't lost
       - ./uploads:/app/uploads
