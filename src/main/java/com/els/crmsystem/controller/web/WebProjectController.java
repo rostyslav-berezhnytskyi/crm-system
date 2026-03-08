@@ -1,10 +1,8 @@
 package com.els.crmsystem.controller.web;
 
+import com.els.crmsystem.dto.input.EquipmentInputDto;
 import com.els.crmsystem.dto.input.ProjectInputDto;
-import com.els.crmsystem.service.CompanyService;
-import com.els.crmsystem.service.ContactService;
-import com.els.crmsystem.service.ProjectMediaService;
-import com.els.crmsystem.service.ProjectService;
+import com.els.crmsystem.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,6 +18,8 @@ public class WebProjectController {
     private final ContactService contactService;
     private final CompanyService companyService;
     private final ProjectMediaService mediaService;
+    private final EquipmentService equipmentService;
+    private final TransactionService transactionService;
 
     private void populateDropdowns(Model model) {
         model.addAttribute("contacts", contactService.getAllActiveContacts());
@@ -30,8 +30,17 @@ public class WebProjectController {
     // View Project Profile (Command Center)
     @GetMapping("/projects/{id}")
     public String viewProject(@PathVariable Long id, Model model) {
+        // Load core project and gallery
         model.addAttribute("project", projectService.getProjectById(id));
         model.addAttribute("gallery", mediaService.getGalleryForProject(id));
+
+        // CRITICAL FIX: Pass the transactions and equipment to the HTML!
+        model.addAttribute("transactions", transactionService.getTransactionsByProjectId(id));
+        model.addAttribute("equipments", equipmentService.getEquipmentForProject(id));
+
+        // Pass all active contacts so we can show them in the "Add Contact" dropdown
+        model.addAttribute("allContacts", contactService.getAllActiveContacts());
+
         return "project/project-view";
     }
 
@@ -88,6 +97,21 @@ public class WebProjectController {
     }
 
     // ==========================================
+    // EQUIPMENT ENDPOINTS
+    // ==========================================
+    @PostMapping("/projects/{id}/equipment")
+    public String addEquipment(@PathVariable Long id, @ModelAttribute EquipmentInputDto dto) {
+        equipmentService.addEquipmentToProject(id, dto);
+        return "redirect:/projects/" + id;
+    }
+
+    @PostMapping("/projects/equipment/{eqId}/delete")
+    public String deleteEquipment(@PathVariable Long eqId, @RequestParam("projectId") Long projectId) {
+        equipmentService.deleteEquipment(eqId);
+        return "redirect:/projects/" + projectId;
+    }
+
+    // ==========================================
     // DELETE PROJECT ENDPOINT
     // ==========================================
     @PostMapping("/projects/delete/{id}")
@@ -122,6 +146,21 @@ public class WebProjectController {
     public String deleteMedia(@PathVariable Long mediaId, @RequestParam("projectId") Long projectId) {
         mediaService.deleteMedia(mediaId);
         // Redirect back to the view page!
+        return "redirect:/projects/" + projectId;
+    }
+
+    // ==========================================
+    // ADDITIONAL CONTACTS ENDPOINTS
+    // ==========================================
+    @PostMapping("/projects/{id}/contacts/add")
+    public String addContactToProject(@PathVariable Long id, @RequestParam("contactId") Long contactId) {
+        projectService.addAdditionalContactToProject(id, contactId);
+        return "redirect:/projects/" + id;
+    }
+
+    @PostMapping("/projects/{projectId}/contacts/{contactId}/remove")
+    public String removeContactFromProject(@PathVariable Long projectId, @PathVariable Long contactId) {
+        projectService.removeAdditionalContactFromProject(projectId, contactId);
         return "redirect:/projects/" + projectId;
     }
 }

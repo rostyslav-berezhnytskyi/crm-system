@@ -36,8 +36,12 @@ public class Project {
     @Column(nullable = false)
     private boolean active = true;
 
+    // Project timeline
     @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;
+
+    @Column(name = "finish_date")
+    private LocalDateTime finishDate;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMedia> media = new ArrayList<>();
@@ -54,8 +58,18 @@ public class Project {
     @JoinColumn(name = "equipment_dealer_id")
     private Company equipmentDealer;
 
+    // Project location
     @Embedded
     private Address address;
+
+    // --- MANY-TO-MANY ADDITIONAL CONTACTS ---
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "project_additional_contacts",
+            joinColumns = @JoinColumn(name = "project_id"),
+            inverseJoinColumns = @JoinColumn(name = "contact_id")
+    )
+    private java.util.Set<Contact> additionalContacts = new java.util.HashSet<>();
 
     // --- LIFECYCLE HOOKS ---
 

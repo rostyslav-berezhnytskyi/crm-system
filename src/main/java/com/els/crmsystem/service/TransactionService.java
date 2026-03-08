@@ -158,7 +158,7 @@ public class TransactionService {
      * Useful for the "Project Details" page where you want to see
      * only expenses for ONE specific project.
      */
-    public List<TransactionOutputDto> getTransactionsByProject(Long projectId) {
+    public List<TransactionOutputDto> getTransactionsByProjectId(Long projectId) {
         return transactionRepository.findByProjectId(projectId).stream()
                 .map(mapper::toOutputDto)
                 .collect(Collectors.toList());

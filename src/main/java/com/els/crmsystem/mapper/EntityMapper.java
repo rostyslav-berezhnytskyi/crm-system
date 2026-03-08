@@ -36,7 +36,7 @@ public class EntityMapper {
         user.setEmail(dto.email());
         user.setPassword(dto.password()); // Note: Service must Hash this later!
         user.setPhoneNumber(dto.phoneNumber());
-        user.setRole(Role.CLIENT); // Default
+        user.setRole(Role.GUEST); // Default
         user.setEnabled(true);     // Default
         return user;
     }
@@ -54,21 +54,30 @@ public class EntityMapper {
                 project.getDescription(),
                 project.isActive(),
                 project.getCreatedDate(),
+                project.getFinishDate(),
 
-                // Safely extract names if the relationships exist
+                // Safely extract names and phones if the relationships exist
                 project.getClient() != null ? project.getClient().getId() : null,
                 project.getClient() != null ? project.getClient().getName() : null,
+                project.getClient() != null ? project.getClient().getPhone() : null,
 
                 project.getInstaller() != null ? project.getInstaller().getId() : null,
                 project.getInstaller() != null ? project.getInstaller().getName() : null,
+                project.getInstaller() != null ? project.getInstaller().getPhone() : null,
 
                 project.getEquipmentDealer() != null ? project.getEquipmentDealer().getId() : null,
                 project.getEquipmentDealer() != null ? project.getEquipmentDealer().getName() : null,
+                project.getEquipmentDealer() != null ? project.getEquipmentDealer().getMainPhone() : null,
 
                 // Safely extract embedded address
                 project.getAddress() != null ? project.getAddress().getText() : null,
                 project.getAddress() != null ? project.getAddress().getLatitude() : null,
-                project.getAddress() != null ? project.getAddress().getLongitude() : null
+                project.getAddress() != null ? project.getAddress().getLongitude() : null,
+
+                // Map the new Many-to-Many additional contacts list
+                project.getAdditionalContacts().stream()
+                        .map(this::toOutputDto)
+                        .toList()
         );
     }
 
@@ -183,6 +192,20 @@ public class EntityMapper {
                 media.getFileType(),
                 media.getDescription(),
                 media.getUploadedAt()
+        );
+    }
+
+    // ==========================================
+    // EQUIPMENT MAPPINGS
+    // ==========================================
+    public EquipmentOutputDto toOutputDto(Equipment equipment) {
+        if (equipment == null) return null;
+        return new EquipmentOutputDto(
+                equipment.getId(),
+                equipment.getName(),
+                equipment.getSerialNumber(),
+                equipment.getWarrantyMonths(),
+                equipment.getNotes()
         );
     }
 }

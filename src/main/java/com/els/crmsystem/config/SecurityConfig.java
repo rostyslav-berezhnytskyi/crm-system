@@ -30,31 +30,36 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Define URL rules
                 .authorizeHttpRequests(auth -> auth
-                        // 1. PUBLIC ZONE (Login, CSS, JS, Images)
+                        // 1. PUBLIC ZONE
                         .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
 
-                        // 2. RESTRICTED ZONE (Everything else)
-                        // ONLY users with role 'ADMIN' can enter these pages.
-                        // A 'CLIENT' (hacker) will be blocked here.
-//                        .requestMatchers("/register", "/users/**").hasRole("ADMIN")
+                        // 2. GOD MODE (Users)
                         .requestMatchers("/register", "/users/**").hasRole("ADMIN")
-                        .requestMatchers("/projects/**").hasAnyRole("ADMIN", "DIRECTOR")
-                        .requestMatchers("/transactions/**").hasAnyRole("ADMIN", "DIRECTOR")
-                        .requestMatchers("/uploads/**").hasAnyRole("ADMIN", "DIRECTOR")
 
-                        // 3. CATCH-ALL
-                        // If we forgot a URL, default to requiring login (safe backup)
+                        // 3. MONEY & CRM ZONE (Transactions, Contacts, Companies)
+                        .requestMatchers("/transactions/**", "/contacts/**", "/companies/**")
+                        .hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
+
+                        // 4. PROJECT MANAGEMENT (Create, Edit, Delete)
+                        .requestMatchers("/projects/new", "/projects/edit/**", "/projects/update/**", "/projects/delete/**")
+                        .hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
+
+                        .requestMatchers("/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER", "GUEST")
+
+                        // 5. OPERATIONAL ZONE (View Projects, Upload Photos)
+                        // INSTALLER is allowed here.
+                        .requestMatchers("/projects/**", "/uploads/**")
+                        .hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER")
+
+                        // 6. CATCH-ALL FOR GUESTS
                         .anyRequest().authenticated()
                 )
-                // Define Login Page
                 .formLogin(form -> form
-                        .loginPage("/login") // We will create this HTML file
-                        .defaultSuccessUrl("/transactions", true) // Where to go after login
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/projects", true)
                         .permitAll()
                 )
-                // Define Logout
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")

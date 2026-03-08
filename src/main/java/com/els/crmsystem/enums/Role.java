@@ -18,7 +18,7 @@ public enum Role {
     DIRECTOR(
             "Director",
             "Директор",
-            "Can manage users, assign roles, and delete projects"
+            "Can manage users and delete projects"
     ),
 
     MANAGER(
@@ -27,10 +27,16 @@ public enum Role {
             "Can manage projects and tasks, but cannot delete users"
     ),
 
-    CLIENT(
-            "Client",
-            "Клієнт",
-            "Read-only access to view their own orders and products"
+    INSTALLER(
+            "Installer",
+            "Монтажник",
+            "Can view and update tasks/project assigned to them"
+    ),
+
+    GUEST(
+            "Guest",
+            "Гість",
+            "Default role for new registrations."
     );
 
     private final String englishName;

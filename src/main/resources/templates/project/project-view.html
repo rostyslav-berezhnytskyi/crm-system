@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <title>ELS CRM - Профіль проєкту</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>body { background-color: #f4f6f9; }</style>
+    <style>body {
+        background-color: #f4f6f9;
+    }</style>
 </head>
 <body>
 
@@ -28,81 +30,242 @@
 
 <div class="container-fluid px-4 mb-5">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center">
-            <h2 class="fw-bold mb-0 me-3" th:text="${project.name()}"></h2>
-            <span th:if="${project.active()}" class="badge bg-success fs-6">Активний</span>
-            <span th:unless="${project.active()}" class="badge bg-secondary fs-6">Завершений</span>
-        </div>
+    <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <a th:href="@{/projects/edit/{id}(id=${project.id()})}" class="btn btn-warning shadow-sm me-2"><i class="bi bi-pencil"></i> Редагувати</a>
+            <div class="d-flex align-items-center mb-2">
+                <h2 class="fw-bold mb-0 me-3" th:text="${project.name()}"></h2>
+                <span th:if="${project.active()}" class="badge bg-success fs-6">Активний</span>
+                <span th:unless="${project.active()}" class="badge bg-secondary fs-6">Завершений</span>
+            </div>
+            <div class="text-muted small">
+                <i class="bi bi-calendar-play"></i> Початок: <span class="fw-bold"
+                                                                   th:text="${#temporals.format(project.createdDate(), 'dd MMM yyyy')}"></span>
+                <span th:if="${project.finishDate() != null}">
+                    &nbsp;|&nbsp; <i class="bi bi-calendar-check"></i> Завершено: <span class="fw-bold"
+                                                                                        th:text="${#temporals.format(project.finishDate(), 'dd MMM yyyy')}"></span>
+                </span>
+            </div>
+        </div>
 
-            <form th:action="@{/projects/delete/{id}(id=${project.id()})}" method="post" class="d-inline" onsubmit="return confirm('Ви впевнені, що хочете повністю видалити цей проєкт? Це неможливо скасувати.');">
-                <button type="submit" class="btn btn-danger shadow-sm me-2"><i class="bi bi-trash"></i> Видалити</button>
+        <div>
+            <a th:href="@{/projects/edit/{id}(id=${project.id()})}" class="btn btn-warning shadow-sm me-2"><i
+                    class="bi bi-pencil"></i> Редагувати</a>
+            <form th:action="@{/projects/delete/{id}(id=${project.id()})}" method="post" class="d-inline"
+                  onsubmit="return confirm('Ви впевнені, що хочете повністю видалити цей проєкт? Це неможливо скасувати.');">
+                <button type="submit" class="btn btn-danger shadow-sm me-2"><i class="bi bi-trash"></i> Видалити
+                </button>
             </form>
-
             <a href="/projects" class="btn btn-outline-secondary shadow-sm">До списку</a>
         </div>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm">
+        ⚠️ <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
     <div class="row">
         <div class="col-md-5 mb-4">
 
             <div class="card shadow-sm border-0 mb-4">
-                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm">
-                    ⚠️ <span th:text="${error}"></span>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
                 <div class="card-header bg-white fw-bold">📍 Розташування та Опис</div>
                 <div class="card-body">
-                    <p class="mb-1"><i class="bi bi-geo-alt text-danger"></i> <span th:text="${project.addressText()}"></span></p>
-                    <small class="text-muted mb-3 d-block" th:if="${project.latitude() != null}">GPS: <span th:text="${project.latitude()}"></span>, <span th:text="${project.longitude()}"></span></small>
+                    <p class="mb-1"><i class="bi bi-geo-alt text-danger"></i> <span
+                            th:text="${project.addressText()}"></span></p>
+                    <small class="text-muted mb-3 d-block" th:if="${project.latitude() != null}">GPS: <span
+                            th:text="${project.latitude()}"></span>, <span
+                            th:text="${project.longitude()}"></span></small>
                     <hr>
-                    <p class="mb-0" style="white-space: pre-wrap;" th:text="${project.description() != null and !project.description().isEmpty() ? project.description() : 'Опис відсутній.'}"></p>
+                    <p class="mb-0" style="white-space: pre-wrap;"
+                       th:text="${project.description() != null and !project.description().isEmpty() ? project.description() : 'Опис відсутній.'}"></p>
                 </div>
             </div>
 
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white fw-bold">🤝 Учасники проєкту</div>
-                <div class="card-body">
+            <div sec:authorize="hasAnyRole('ADMIN', 'DIRECTOR', 'MANAGER')" class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>🤝 Головні учасники</span>
+                </div>
+            </div>
+                <div class="card-body p-0">
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <span class="text-muted"><i class="bi bi-person"></i> Клієнт:</span>
-                            <a th:if="${project.clientId() != null}" th:href="@{/contacts/{id}(id=${project.clientId()})}" class="fw-bold text-decoration-none" th:text="${project.clientName()}"></a>
+                        <li class="list-group-item">
+                            <div class="text-muted small"><i class="bi bi-person"></i> Клієнт:</div>
+                            <div th:if="${project.clientId() != null}"
+                                 class="d-flex justify-content-between align-items-center mt-1">
+                                <a th:href="@{/contacts/{id}(id=${project.clientId()})}"
+                                   class="fw-bold text-decoration-none" th:text="${project.clientName()}"></a>
+                                <a th:if="${project.clientPhone() != null and !project.clientPhone().isEmpty()}"
+                                   th:href="'tel:' + ${project.clientPhone()}"
+                                   class="btn btn-sm btn-outline-success rounded-pill py-0"><i
+                                        class="bi bi-telephone"></i> <span
+                                        th:text="${project.clientPhone()}"></span></a>
+                            </div>
                             <span th:unless="${project.clientId() != null}" class="text-muted small">Відсутній</span>
                         </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <span class="text-muted"><i class="bi bi-tools"></i> Монтажник:</span>
-                            <a th:if="${project.installerId() != null}" th:href="@{/contacts/{id}(id=${project.installerId()})}" class="fw-bold text-decoration-none text-success" th:text="${project.installerName()}"></a>
+
+                        <li class="list-group-item">
+                            <div class="text-muted small"><i class="bi bi-tools"></i> Головний Монтажник:</div>
+                            <div th:if="${project.installerId() != null}"
+                                 class="d-flex justify-content-between align-items-center mt-1">
+                                <a th:href="@{/contacts/{id}(id=${project.installerId()})}"
+                                   class="fw-bold text-decoration-none text-success"
+                                   th:text="${project.installerName()}"></a>
+                                <a th:if="${project.installerPhone() != null and !project.installerPhone().isEmpty()}"
+                                   th:href="'tel:' + ${project.installerPhone()}"
+                                   class="btn btn-sm btn-outline-success rounded-pill py-0"><i
+                                        class="bi bi-telephone"></i> <span th:text="${project.installerPhone()}"></span></a>
+                            </div>
                             <span th:unless="${project.installerId() != null}" class="text-muted small">Відсутній</span>
                         </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center border-bottom-0">
-                            <span class="text-muted"><i class="bi bi-building"></i> Постачальник:</span>
-                            <a th:if="${project.equipmentDealerId() != null}" th:href="@{/companies/{id}(id=${project.equipmentDealerId()})}" class="fw-bold text-decoration-none text-primary" th:text="${project.equipmentDealerName()}"></a>
-                            <span th:unless="${project.equipmentDealerId() != null}" class="text-muted small">Відсутній</span>
+
+                        <li class="list-group-item border-bottom-0">
+                            <div class="text-muted small"><i class="bi bi-building"></i> Постачальник:</div>
+                            <div th:if="${project.equipmentDealerId() != null}"
+                                 class="d-flex justify-content-between align-items-center mt-1">
+                                <a th:href="@{/companies/{id}(id=${project.equipmentDealerId()})}"
+                                   class="fw-bold text-decoration-none text-primary"
+                                   th:text="${project.equipmentDealerName()}"></a>
+                                <a th:if="${project.equipmentDealerPhone() != null and !project.equipmentDealerPhone().isEmpty()}"
+                                   th:href="'tel:' + ${project.equipmentDealerPhone()}"
+                                   class="btn btn-sm btn-outline-success rounded-pill py-0"><i
+                                        class="bi bi-telephone"></i> <span
+                                        th:text="${project.equipmentDealerPhone()}"></span></a>
+                            </div>
+                            <span th:unless="${project.equipmentDealerId() != null}"
+                                  class="text-muted small">Відсутній</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-header bg-light fw-bold border-top d-flex justify-content-between align-items-center">
+                    <span class="fs-6 text-secondary">Інші контактні особи</span>
+                    <button class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="modal"
+                            data-bs-target="#addContactModal">
+                        <i class="bi bi-plus-lg"></i> Додати
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li th:each="contact : ${project.additionalContacts()}"
+                            class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <a th:href="@{/contacts/{id}(id=${contact.id()})}"
+                                   class="fw-bold text-dark text-decoration-none" th:text="${contact.name()}"></a>
+                                <div class="text-muted small" th:text="${contact.role().getUkrainianName()}"></div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <a th:if="${contact.phone() != null and !contact.phone().isEmpty()}"
+                                   th:href="'tel:' + ${contact.phone()}" class="btn btn-sm btn-light border me-2"><i
+                                        class="bi bi-telephone text-success"></i></a>
+                                <form th:action="@{/projects/{projectId}/contacts/{contactId}/remove(projectId=${project.id()}, contactId=${contact.id()})}"
+                                      method="post" onsubmit="return confirm('Видалити цей контакт з проєкту?');">
+                                    <button type="submit" class="btn btn-sm btn-light border text-danger"><i
+                                            class="bi bi-x-lg"></i></button>
+                                </form>
+                            </div>
+                        </li>
+                        <li th:if="${#lists.isEmpty(project.additionalContacts())}"
+                            class="list-group-item text-center text-muted small py-3">
+                            Немає додаткових контактів
                         </li>
                     </ul>
                 </div>
             </div>
-        </div>
 
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>💰 Фінанси проєкту</span>
+                    <a th:href="@{/transactions/new(projectId=${project.id()})}" class="btn btn-sm btn-success">
+                        <i class="bi bi-plus-lg"></i> Транзакція
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Дата</th>
+                            <th>Опис</th>
+                            <th class="text-end">Сума</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="txn : ${transactions}">
+                            <td class="text-muted small align-middle"
+                                th:text="${#temporals.format(txn.date(), 'dd-MM-yy')}"></td>
+                            <td class="align-middle" th:text="${txn.description()}"></td>
+                            <td class="text-end fw-bold align-middle"
+                                th:classappend="${txn.type().name() == 'INCOME'} ? 'text-success' : 'text-danger'">
+                                <span th:text="${txn.type().name() == 'EXPENSE'} ? '-' : '+'"></span>
+                                <span th:text="${txn.amount()}"></span> ₴
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(transactions)}">
+                            <td colspan="3" class="text-center text-muted py-3">Немає фінансових записів</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
         <div class="col-md-7">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>⚙️ Встановлене обладнання</span>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#equipmentModal">
+                        <i class="bi bi-plus-lg"></i> Додати
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li th:each="item : ${equipments}"
+                            class="list-group-item d-flex justify-content-between align-items-start py-3">
+                            <div>
+                                <strong class="d-block text-dark" th:text="${item.name()}"></strong>
+                                <small class="text-muted">Серійний номер: <span
+                                        class="font-monospace text-dark bg-light px-1 border rounded"
+                                        th:text="${item.serialNumber()}"></span></small><br>
+                                <small class="text-muted" th:if="${item.notes() != null and !item.notes().isEmpty()}"
+                                       th:text="'Нотатки: ' + ${item.notes()}"></small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-secondary rounded-pill mb-2"
+                                      th:if="${item.warrantyMonths() != null}"
+                                      th:text="${item.warrantyMonths()} + ' міс. гарантії'"></span>
+                                <form th:action="@{/projects/equipment/{eqId}/delete(eqId=${item.id()})}" method="post"
+                                      onsubmit="return confirm('Видалити це обладнання?');">
+                                    <input type="hidden" name="projectId" th:value="${project.id()}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i
+                                            class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </li>
+                        <li th:if="${#lists.isEmpty(equipments)}" class="list-group-item text-center text-muted py-4">
+                            Немає доданого обладнання.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-dark text-white">
                     <h5 class="mb-0">📸 Галерея та Документи</h5>
                 </div>
                 <div class="card-body">
 
-                    <form th:action="@{/projects/{id}/media(id=${project.id()})}" method="post" enctype="multipart/form-data" class="bg-light p-3 rounded border mb-4">
+                    <form th:action="@{/projects/{id}/media(id=${project.id()})}" method="post"
+                          enctype="multipart/form-data" class="bg-light p-3 rounded border mb-4">
                         <div class="row g-2">
                             <div class="col-md-5">
                                 <input type="file" name="file" class="form-control form-control-sm" required>
                             </div>
                             <div class="col-md-5">
-                                <input type="text" name="description" class="form-control form-control-sm" placeholder="Опис фото (напр. Щиток)" required>
+                                <input type="text" name="description" class="form-control form-control-sm"
+                                       placeholder="Опис фото (напр. Щиток)" required>
                             </div>
                             <div class="col-md-2">
-                                <button type="submit" class="btn btn-sm btn-success w-100"><i class="bi bi-upload"></i></button>
+                                <button type="submit" class="btn btn-sm btn-success w-100"><i class="bi bi-upload"></i>
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -112,35 +275,40 @@
                         <p class="mt-2">Ще немає завантажених фотографій для цього проєкту.</p>
                     </div>
 
-                    <div class="list-group" style="max-height: 600px; overflow-y: auto;">
-                        <div th:each="media : ${gallery}" class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                        <div th:each="media : ${gallery}"
+                             class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div class="d-flex align-items-center">
 
                                 <a th:href="@{'/uploads/' + ${media.fileUrl()}}" target="_blank">
                                     <img th:if="${media.fileType() != null and #strings.startsWith(media.fileType(), 'image/')}"
                                          th:src="@{'/uploads/' + ${media.fileUrl()}}"
                                          class="rounded shadow-sm me-3 border"
-                                         style="width: 80px; height: 80px; object-fit: cover;" alt="Preview">
+                                         style="width: 60px; height: 60px; object-fit: cover;" alt="Preview">
 
                                     <div th:unless="${media.fileType() != null and #strings.startsWith(media.fileType(), 'image/')}"
                                          class="bg-secondary bg-opacity-10 rounded shadow-sm border me-3 d-flex align-items-center justify-content-center"
-                                         style="width: 80px; height: 80px;">
-                                        <i class="bi bi-filetype-pdf text-danger fs-1" th:if="${media.fileType() != null and #strings.contains(media.fileType(), 'pdf')}"></i>
-                                        <i class="bi bi-file-earmark-text text-primary fs-1" th:unless="${media.fileType() != null and #strings.contains(media.fileType(), 'pdf')}"></i>
+                                         style="width: 60px; height: 60px;">
+                                        <i class="bi bi-filetype-pdf text-danger fs-3"
+                                           th:if="${media.fileType() != null and #strings.contains(media.fileType(), 'pdf')}"></i>
+                                        <i class="bi bi-file-earmark-text text-primary fs-3"
+                                           th:unless="${media.fileType() != null and #strings.contains(media.fileType(), 'pdf')}"></i>
                                     </div>
                                 </a>
 
                                 <div>
-                                    <span class="fw-bold text-dark d-block fs-6" th:text="${media.description()}"></span>
-                                    <small class="text-muted" th:text="${#temporals.format(media.uploadedAt(), 'dd-MM-yyyy HH:mm')}"></small>
+                                    <span class="fw-bold text-dark d-block" th:text="${media.description()}"></span>
+                                    <small class="text-muted"
+                                           th:text="${#temporals.format(media.uploadedAt(), 'dd-MM-yyyy HH:mm')}"></small>
                                 </div>
                             </div>
 
                             <div class="d-flex">
-                                <a th:href="@{'/uploads/' + ${media.fileUrl()}}" target="_blank" class="btn btn-outline-primary me-2" title="Переглянути"><i class="bi bi-eye"></i></a>
-                                <form th:action="@{/projects/media/{mediaId}/delete(mediaId=${media.id()})}" method="post" onsubmit="return confirm('Видалити цей файл?');">
+                                <form th:action="@{/projects/media/{mediaId}/delete(mediaId=${media.id()})}"
+                                      method="post" onsubmit="return confirm('Видалити цей файл?');">
                                     <input type="hidden" name="projectId" th:value="${project.id()}">
-                                    <button type="submit" class="btn btn-outline-danger" title="Видалити"><i class="bi bi-trash"></i></button>
+                                    <button type="submit" class="btn btn-outline-danger border-0" title="Видалити"><i
+                                            class="bi bi-trash"></i></button>
                                 </form>
                             </div>
                         </div>
@@ -150,6 +318,69 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<div class="modal fade" id="equipmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/projects/{id}/equipment(id=${project.id()})}" method="post">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">⚙️ Додати обладнання</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Назва моделі / Товару *</label>
+                        <input type="text" name="name" class="form-control" placeholder="Deye 12kW SUN-12K..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Серійний номер (SN)</label>
+                        <input type="text" name="serialNumber" class="form-control font-monospace"
+                               placeholder="Напр. 123456789">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Гарантія (місяців)</label>
+                        <input type="number" name="warrantyMonths" class="form-control" placeholder="60">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Нотатки</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-success">Зберегти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addContactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/projects/{id}/contacts/add(id=${project.id()})}" method="post">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">➕ Прикріпити контакт до проєкту</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Виберіть особу з вашої бази контактів:</label>
+                        <select name="contactId" class="form-select" required>
+                            <option value="">-- Виберіть контакт --</option>
+                            <option th:each="c : ${allContacts}" th:value="${c.id()}"
+                                    th:text="${c.name()} + ' (' + ${c.role().getUkrainianName()} + ')'"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Прикріпити</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

@@ -3,6 +3,7 @@ package com.els.crmsystem.service;
 import com.els.crmsystem.dto.input.ProjectInputDto;
 import com.els.crmsystem.dto.output.ProjectOutputDto;
 import com.els.crmsystem.entity.Address;
+import com.els.crmsystem.entity.Contact;
 import com.els.crmsystem.entity.Project;
 import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.CompanyRepository;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +37,7 @@ public class ProjectService {
 
         Project project = mapper.toEntity(dto);
         project.setActive(true);
+        project.setCreatedDate(LocalDateTime.now()); // AUTO-START
 
         attachRelationships(project, dto);
 
@@ -52,7 +56,15 @@ public class ProjectService {
         project.setName(dto.name());
         project.setDescription(dto.description());
 
+        // SMART DATE LOGIC: Check if status is actually changing
         if (dto.active() != null) {
+            if (project.isActive() && !dto.active()) {
+                // Project is being closed
+                project.setFinishDate(LocalDateTime.now());
+            } else if (!project.isActive() && dto.active()) {
+                // Project is being reopened
+                project.setFinishDate(null);
+            }
             project.setActive(dto.active());
         }
 
@@ -113,10 +125,34 @@ public class ProjectService {
     }
 
     @Transactional
+    public void addAdditionalContactToProject(Long projectId, Long contactId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        Contact contact = contactRepository.findById(contactId)
+                .orElseThrow(() -> new RuntimeException("Contact not found"));
+
+        project.getAdditionalContacts().add(contact);
+        projectRepository.save(project);
+    }
+
+    @Transactional
+    public void removeAdditionalContactFromProject(Long projectId, Long contactId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        Contact contact = contactRepository.findById(contactId)
+                .orElseThrow(() -> new RuntimeException("Contact not found"));
+
+        project.getAdditionalContacts().remove(contact);
+        projectRepository.save(project);
+    }
+
+    @Transactional
     public void closeProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
         project.setActive(false);
+        project.setFinishDate(LocalDateTime.now()); // AUTO-FINISH
+        projectRepository.save(project);
     }
 
     @Transactional

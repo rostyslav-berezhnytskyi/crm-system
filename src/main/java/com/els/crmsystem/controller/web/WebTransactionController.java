@@ -12,10 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
@@ -37,16 +34,16 @@ public class WebTransactionController {
 
     // --- 2. CREATE FORM ---
     @GetMapping("/transactions/new")
-    public String showCreateForm(Model model) {
-        // We need to send an empty DTO to bind the form data to
-        model.addAttribute("transaction", new TransactionInputDto(
-                null, null, null, null, null, null, null, null, null
-        ));
+    public String showCreateForm(@RequestParam(value = "projectId", required = false) Long projectId, Model model) {
+        // Create an empty DTO but pre-fill the projectId if it came from the URL
+        TransactionInputDto dto = new TransactionInputDto(
+                projectId, null, null, null, null, null, null, null, null
+        );
 
-        // Load data for Dropdowns (Projects, Enums)
-        prepareDropdownData(model);
+        model.addAttribute("transaction", dto);
+        prepareDropdownData(model); // Use your helper method here!
 
-        return "transaction/transaction-create"; // connects to templates/transaction-create.html
+        return "transaction/transaction-create"; // Fixed to singular folder name
     }
 
     // --- 3. HANDLE CREATE ACTION ---
