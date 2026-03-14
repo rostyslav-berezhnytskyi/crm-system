@@ -1,6 +1,7 @@
 package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.TransactionInputDto;
+import com.els.crmsystem.dto.output.TransactionOutputDto;
 import com.els.crmsystem.enums.PaymentMethod;
 import com.els.crmsystem.enums.TransactionCategory;
 import com.els.crmsystem.enums.TransactionType;
@@ -9,6 +10,7 @@ import com.els.crmsystem.service.ProjectService;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,12 +26,21 @@ public class WebTransactionController {
     private final ProjectService projectService;
     private final EntityMapper mapper;
 
-    // --- 1. LIST PAGE ---
+    // --- 1. LIST PAGE (WITH PAGINATION & SORTING) ---
     @GetMapping("/transactions")
-    public String showTransactionsPage(Model model) {
-        // Send the list of transactions to the table
-        model.addAttribute("transactions", transactionService.getAllTransactions());
-        return "transaction/transactions"; // connects to templates/transactions.html
+    public String listTransactions(
+            @RequestParam(defaultValue = "0") int page,
+            Model model) {
+
+        // Ask the Service for Page # (page), with 15 items per page
+        Page<TransactionOutputDto> transactionPage = transactionService.getTransactionsPage(page, 15);
+
+        // Send the DTOs and Pagination data to the HTML
+        model.addAttribute("transactions", transactionPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", transactionPage.getTotalPages());
+
+        return "transaction/transactions";
     }
 
     // --- 2. CREATE FORM ---
@@ -41,9 +52,9 @@ public class WebTransactionController {
         );
 
         model.addAttribute("transaction", dto);
-        prepareDropdownData(model); // Use your helper method here!
+        prepareDropdownData(model);
 
-        return "transaction/transaction-create"; // Fixed to singular folder name
+        return "transaction/transaction-form"; // Fixed to singular folder name
     }
 
     // --- 3. HANDLE CREATE ACTION ---
@@ -56,7 +67,7 @@ public class WebTransactionController {
         // If validation fails (e.g., negative amount), reload the page with errors
         if (bindingResult.hasErrors()) {
             prepareDropdownData(model); // Must reload dropdowns or the page crashes!
-            return "transaction/transaction-create";
+            return "transaction-form";
         }
 
         try {
@@ -69,7 +80,7 @@ public class WebTransactionController {
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
             prepareDropdownData(model);
-            return "transaction/transaction-create";
+            return "transaction-form";
         }
     }
 
@@ -99,7 +110,7 @@ public class WebTransactionController {
 
         prepareDropdownData(model);
 
-        return "transaction/transaction-edit";
+        return "transaction/transaction-form";
     }
 
     // --- 6. HANDLE UPDATE ---
@@ -113,7 +124,7 @@ public class WebTransactionController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("transactionId", id);
             prepareDropdownData(model);
-            return "transaction/transaction-edit";
+            return "transaction/transaction-form";
         }
 
         transactionService.updateTransaction(id, dto, principal.getName());

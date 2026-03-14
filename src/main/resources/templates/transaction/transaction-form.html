@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments :: head(${transactionId == null ? 'Нова транзакція - ELS CRM' : 'Редагувати транзакцію - ELS CRM'})}"></head>
+
+<body class="bg-light">
+
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container-fluid px-3 px-md-4 mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm border-0">
+
+                <div class="card-header text-white py-3" th:classappend="${transactionId == null ? 'bg-primary' : 'bg-warning'}">
+                    <h5 class="mb-0" th:classappend="${transactionId != null ? 'text-dark fw-bold' : ''}">
+                        <i th:class="${transactionId == null ? 'bi bi-plus-circle me-2' : 'bi bi-pencil-square me-2'}"></i>
+                        <span th:text="${transactionId == null ? 'Створити нову транзакцію' : 'Редагувати транзакцію'}"></span>
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <div th:if="${error}" class="alert alert-danger">
+                        ⚠️ <span th:text="${error}"></span>
+                    </div>
+
+                    <form th:action="${transactionId == null ? '/transactions' : '/transactions/update/' + transactionId}"
+                          th:object="${transaction}" method="post" enctype="multipart/form-data">
+
+                        <div class="row gy-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Проєкт</label>
+                                <select th:field="*{projectId}" class="form-select form-select-lg" required>
+                                    <option value="" th:if="${transactionId == null}" disabled selected>-- Оберіть проєкт --</option>
+                                    <option th:each="p : ${projects}" th:value="${p.id}" th:text="${p.name}"></option>
+                                </select>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('projectId')}" th:errors="*{projectId}"></div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-bold text-muted small">Тип</label>
+                                <select th:field="*{type}" class="form-select" required>
+                                    <option th:each="t : ${types}" th:value="${t}" th:text="${t.name() == 'INCOME' ? '🟢 Дохід' : '🔴 Витрата'}"></option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-bold text-muted small">Категорія</label>
+                                <select th:field="*{category}" class="form-select" required>
+                                    <option th:each="c : ${categories}" th:value="${c}" th:text="${c.ukrainianName}"></option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-bold text-muted small">Сума (₴)</label>
+                                <input type="number" step="0.01" th:field="*{amount}" class="form-control" placeholder="0.00" required>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-bold text-muted small">Спосіб оплати</label>
+                                <select th:field="*{paymentMethod}" class="form-select" required>
+                                    <option th:each="m : ${paymentMethods}" th:value="${m}" th:text="${m.ukrainianName}"></option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 mb-2">
+                                <label class="form-label fw-bold text-muted small">Дата (Залиште порожнім для СЬОГОДНІ)</label>
+                                <input type="datetime-local" th:field="*{date}" class="form-control">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Опис</label>
+                                <textarea th:field="*{description}" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <div class="col-12 col-md-6 mt-4">
+                                <div class="p-3 bg-white border rounded h-100 shadow-sm">
+                                    <label class="form-label fw-bold text-secondary"><i class="bi bi-receipt me-1"></i> Чек / Рахунок (PDF/Фото)</label>
+
+                                    <div th:if="${currentReceipt}" class="alert alert-secondary py-2 px-3 small mb-3 d-flex justify-content-between align-items-center">
+                                        <span>Поточний файл:</span>
+                                        <a th:href="@{'/uploads/' + ${currentReceipt}}" target="_blank" class="btn btn-sm btn-outline-primary py-0">Переглянути</a>
+                                    </div>
+
+                                    <input type="file" name="receiptFile" class="form-control form-control-sm" accept="image/*,.pdf">
+                                    <div class="form-text mt-2" style="font-size: 0.75rem;" th:text="${transactionId != null ? 'Завантажте новий файл, щоб замінити поточний.' : ''}"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6 mt-4">
+                                <div class="p-3 bg-white border rounded h-100 shadow-sm">
+                                    <label class="form-label fw-bold text-secondary"><i class="bi bi-camera me-1"></i> Фото товару</label>
+
+                                    <div th:if="${currentItemImage}" class="alert alert-secondary py-2 px-3 small mb-3 d-flex justify-content-between align-items-center">
+                                        <span>Поточний файл:</span>
+                                        <a th:href="@{'/uploads/' + ${currentItemImage}}" target="_blank" class="btn btn-sm btn-outline-primary py-0">Переглянути</a>
+                                    </div>
+
+                                    <input type="file" name="itemImageFile" class="form-control form-control-sm" accept="image/*">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row justify-content-between mt-5 gap-3">
+                            <a href="/transactions" class="btn btn-secondary px-4 w-100 w-sm-auto shadow-sm">Скасувати</a>
+                            <button type="submit" class="btn px-5 fw-bold w-100 w-sm-auto shadow-sm" th:classappend="${transactionId == null ? 'btn-primary' : 'btn-warning'}">
+                                <span th:text="${transactionId == null ? 'Зберегти транзакцію' : 'Оновити транзакцію'}"></span>
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

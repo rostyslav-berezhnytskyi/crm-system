@@ -1,93 +1,65 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>ELS CRM - Проєкти</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>
-        body { background-color: #f4f6f9; }
-        .card { border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .status-badge { font-size: 0.8em; padding: 5px 10px; border-radius: 12px; }
-        .status-active { background-color: #d1e7dd; color: #0f5132; }
-        .status-closed { background-color: #e2e3e5; color: #41464b; }
 
-        /* CSS for clickable row hover effect */
-        .clickable-row { cursor: pointer; transition: background-color 0.2s; }
-        .clickable-row:hover { background-color: #e9ecef !important; }
-    </style>
-</head>
-<body>
+<head th:replace="~{fragments :: head('ELS CRM - Проєкти')}"></head>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
-    <div class="container-fluid px-4">
-        <a class="navbar-brand fw-bold" href="/">ELS CRM</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link active" href="/projects">Проєкти</a></li>
-                <li class="nav-item"><a class="nav-link" href="/transactions">Транзакції</a></li>
-                <li class="nav-item"><a class="nav-link" href="/contacts">Контакти</a></li>
-                <li class="nav-item"><a class="nav-link" href="/companies">Компанії</a></li>
-                <li class="nav-item"><a class="nav-link" href="/users">Співробітники</a></li>
-            </ul>
-            <form th:action="@{/logout}" method="post" class="d-flex">
-                <button type="submit" class="btn btn-danger btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Вийти
-                </button>
-            </form>
+<body class="bg-light">
+
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container-fluid px-3 px-md-4 mt-4 mb-5">
+
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
+        <h2 class="mb-0 text-center text-sm-start">🛠️ Управління проєктами</h2>
+
+        <div class="w-100 d-flex justify-content-center justify-content-sm-end">
+            <a href="/projects/new" class="btn btn-primary text-nowrap w-100 w-sm-auto shadow-sm" style="max-width: 420px;">
+                <i class="bi bi-plus-lg me-1"></i> Створити проєкт
+            </a>
         </div>
     </div>
-</nav>
 
-<div class="container-fluid px-4">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>🛠️ Управління проєктами</h2>
-        <a href="/projects/new" class="btn btn-primary btn-lg shadow-sm">
-            <i class="bi bi-plus-lg"></i> Створити проєкт
-        </a>
-    </div>
-
-    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
+    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show shadow-sm">
         ✅ Проєкт успішно створено!
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm border-0 d-none d-md-block" style="border-radius: 12px;">
         <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
                 <thead class="table-light">
                 <tr>
-                    <th>Проєкт</th>
-                    <th>Адреса</th>
+                    <th style="width: 30%;" class="ps-4">Проєкт</th>
+                    <th style="width: 25%;">Адреса</th>
                     <th>Клієнт / Постачальник</th>
-                    <th>Статус</th>
-                    <th class="text-center">Дії</th>
+                    <th style="width: 120px;">Статус</th>
+                    <th style="width: 80px;" class="text-center pe-4">Дії</th>
                 </tr>
                 </thead>
                 <tbody>
-
                 <tr th:each="project : ${projects}" class="clickable-row" th:data-href="@{/projects/{id}(id=${project.id()})}">
-                    <td>
-                        <strong class="text-dark fs-6" th:text="${project.name()}"></strong><br>
+                    <td class="ps-4 text-truncate">
+                        <strong class="text-dark fs-6 d-block text-truncate" th:text="${project.name()}" th:title="${project.name()}"></strong>
                         <small class="text-muted" th:text="${#temporals.format(project.createdDate(), 'dd-MM-yyyy')}"></small>
                     </td>
-                    <td>
-                        <span th:text="${project.addressText()}"></span><br>
+                    <td class="text-truncate">
+                        <span class="d-block text-truncate" th:text="${project.addressText()}" th:title="${project.addressText()}"></span>
                         <small class="text-primary" th:if="${project.latitude() != null}">📍 GPS Збережено</small>
                     </td>
-                    <td>
-                        👤 <span th:text="${project.clientName() != null ? project.clientName() : 'Відсутній'}"></span><br>
-                        🏢 <span class="text-muted small" th:text="${project.equipmentDealerName() != null ? project.equipmentDealerName() : 'Відсутній'}"></span>
+                    <td class="text-truncate">
+                        <div class="text-truncate" th:title="${project.clientName()}">
+                            👤 <span th:text="${project.clientName() != null ? project.clientName() : 'Відсутній'}"></span>
+                        </div>
+                        <div class="text-muted small text-truncate" th:title="${project.equipmentDealerName()}">
+                            🏢 <span th:text="${project.equipmentDealerName() != null ? project.equipmentDealerName() : 'Відсутній'}"></span>
+                        </div>
                     </td>
                     <td>
                         <span th:if="${project.active()}" class="status-badge status-active">Активний</span>
                         <span th:unless="${project.active()}" class="status-badge status-closed">Завершений</span>
                     </td>
-                    <td class="text-center">
-                        <a th:href="@{/projects/edit/{id}(id=${project.id()})}" class="btn btn-sm btn-outline-warning" title="Редагувати">
+                    <td class="text-center pe-4">
+                        <a th:href="@{/projects/edit/{id}(id=${project.id()})}" class="btn btn-sm btn-outline-warning position-relative" style="z-index: 2;" title="Редагувати">
                             <i class="bi bi-pencil"></i>
                         </a>
                     </td>
@@ -99,6 +71,46 @@
             </table>
         </div>
     </div>
+
+    <div class="d-md-none d-flex justify-content-center mb-4">
+        <div class="w-100 px-2" style="max-width: 450px;">
+
+            <div th:each="project : ${projects}" class="card mb-3 border-0 clickable-row shadow-sm" style="border-radius: 16px;" th:data-href="@{/projects/{id}(id=${project.id()})}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong class="fs-5 text-dark d-block text-truncate pe-2" th:text="${project.name()}"></strong>
+                        <span th:if="${project.active()}" class="status-badge status-active ms-2 text-nowrap mt-1">Активний</span>
+                        <span th:unless="${project.active()}" class="status-badge status-closed ms-2 text-nowrap mt-1">Завершений</span>
+                    </div>
+
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-calendar3"></i> <span th:text="${#temporals.format(project.createdDate(), 'dd-MM-yyyy')}"></span>
+                    </p>
+
+                    <p class="mb-2 text-dark text-truncate">
+                        <i class="bi bi-geo-alt text-danger"></i> <span th:text="${project.addressText() != null ? project.addressText() : 'Без адреси'}"></span>
+                    </p>
+
+                    <div class="mb-3 small bg-light p-2 rounded">
+                        <div class="text-muted mb-1 text-truncate">👤 <span class="fw-bold text-dark" th:text="${project.clientName() != null ? project.clientName() : 'Відсутній'}"></span></div>
+                        <div class="text-muted text-truncate">🏢 <span class="text-dark" th:text="${project.equipmentDealerName() != null ? project.equipmentDealerName() : 'Відсутній'}"></span></div>
+                    </div>
+
+                    <div class="d-flex justify-content-end border-top pt-2">
+                        <a th:href="@{/projects/edit/{id}(id=${project.id()})}" class="btn btn-sm btn-outline-warning shadow-sm position-relative" style="z-index: 2;">
+                            <i class="bi bi-pencil"></i> Редагувати
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(projects)}" class="text-center py-4 text-muted">
+                Проєктів не знайдено.
+            </div>
+
+        </div>
+    </div>
+
 </div>
 
 <script>

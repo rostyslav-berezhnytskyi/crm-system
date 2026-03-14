@@ -1,104 +1,92 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>ELS CRM - Редагувати співробітника</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-</head>
+
+<head th:replace="~{fragments :: head('ELS CRM - Редагувати співробітника')}"></head>
+
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
-    <div class="container-fluid px-4">
-        <a class="navbar-brand fw-bold" href="/static">ELS CRM</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="/projects">Проєкти</a></li>
-                <li class="nav-item"><a class="nav-link" href="/transactions">Транзакції</a></li>
-                <li class="nav-item"><a class="nav-link" href="/contacts">Контакти</a></li>
-                <li class="nav-item"><a class="nav-link" href="/companies">Компанії</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/users">Співробітники</a></li>
-            </ul>
-            <form th:action="@{/logout}" method="post" class="d-flex">
-                <button type="submit" class="btn btn-danger btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Вийти
-                </button>
-            </form>
-        </div>
-    </div>
-</nav>
+<nav th:replace="~{fragments :: navbar}"></nav>
 
-<div class="container mb-5" style="max-width: 600px;">
-    <div class="card shadow">
-        <div class="card-header bg-dark text-white d-flex justify-content-between">
-            <h4 class="mb-0">✏️ Редагувати співробітника: <span th:text="${user.username}"></span></h4>
-            <a href="/users" class="btn btn-sm btn-outline-light">Назад</a>
-        </div>
-        <div class="card-body">
+<div class="container-fluid px-3 px-md-4 mt-4 mb-5 d-flex justify-content-center">
+    <div class="w-100" style="max-width: 650px;">
+        <div class="card shadow-sm border-0">
 
-            <form th:action="@{/users/edit/{id}(id=${user.id})}" method="post" enctype="multipart/form-data">
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Фото профілю</label>
-                    <input type="file" name="photo" class="form-control" accept="image/*">
-                    <small class="text-muted" th:if="${user.photoUrl != null}">
-                        Поточне фото: <span th:text="${user.photoUrl}"></span>
-                    </small>
+            <div class="card-header bg-dark text-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 py-3">
+                <h5 class="mb-0">✏️ Редагувати: <span class="fw-bold" th:text="${user.username}"></span></h5>
+                <div class="d-grid d-sm-block">
+                    <a href="/users" class="btn btn-sm btn-outline-light text-nowrap w-100 w-sm-auto">Назад</a>
                 </div>
+            </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Логін</label>
-                        <input type="text" name="username" class="form-control" th:value="${user.username}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Електронна пошта</label>
-                        <input type="email" name="email" class="form-control" th:value="${user.email}" required>
-                    </div>
-                </div>
+            <div class="card-body p-4">
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Номер телефону</label>
-                        <input type="text" name="phoneNumber" class="form-control" th:value="${user.phoneNumber}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Telegram ID</label>
-                        <input type="text" name="telegramId" class="form-control" th:value="${user.telegramId}">
-                    </div>
-                </div>
+                <form th:action="@{/users/edit/{id}(id=${user.id})}" method="post" enctype="multipart/form-data">
 
-                <hr>
+                    <div class="p-3 bg-white border rounded mb-4 shadow-sm">
+                        <label class="form-label fw-bold text-secondary"><i class="bi bi-person-bounding-box me-1"></i> Фото профілю</label>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Роль у системі</label>
-                        <select name="role" class="form-select" required>
-                            <option th:each="r : ${roles}"
-                                    th:value="${r.name()}"
-                                    th:text="${r.ukrainianName}"
-                                    th:selected="${r == user.role}"></option>
-                        </select>
+                        <div th:if="${user.photoUrl != null}" class="alert alert-secondary py-2 px-3 small mb-3 d-flex justify-content-between align-items-center">
+                            <span>Поточне фото:</span>
+                            <a th:href="@{'/uploads/' + ${user.photoUrl}}" target="_blank" class="btn btn-sm btn-outline-primary py-0">Переглянути</a>
+                        </div>
+
+                        <input type="file" name="photo" class="form-control form-control-sm" accept="image/*">
+                        <div class="form-text mt-2" style="font-size: 0.75rem;">Завантажте новий файл, щоб замінити поточний.</div>
                     </div>
-                    <div class="col-md-6 mb-3 d-flex align-items-end">
-                        <div class="form-check form-switch mb-2">
-                            <input type="hidden" name="_enabled" value="on">
-                            <input class="form-check-input" type="checkbox" name="enabled" value="true" th:checked="${user.enabled}">
-                            <label class="form-check-label text-danger fw-bold">Акаунт активний</label>
+
+                    <div class="row gy-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold text-muted small">Логін</label>
+                            <input type="text" name="username" class="form-control" th:value="${user.username}" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold text-muted small">Електронна пошта</label>
+                            <input type="email" name="email" class="form-control" th:value="${user.email}" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold text-muted small">Номер телефону</label>
+                            <input type="text" name="phoneNumber" class="form-control" th:value="${user.phoneNumber}">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold text-muted small">Telegram ID</label>
+                            <input type="text" name="telegramId" class="form-control" th:value="${user.telegramId}">
                         </div>
                     </div>
-                </div>
 
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Скинути пароль <span class="text-muted fw-normal">(Необов'язково)</span></label>
-                    <input type="password" name="newPassword" class="form-control" autocomplete="new-password" placeholder="Залиште порожнім, щоб зберегти поточний пароль">
-                </div>
+                    <hr class="text-muted opacity-25 mb-4">
 
-                <button type="submit" class="btn btn-primary w-100">Зберегти зміни</button>
-            </form>
+                    <div class="row gy-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold text-muted small">Роль у системі</label>
+                            <select name="role" class="form-select" required>
+                                <option th:each="r : ${roles}"
+                                        th:value="${r.name()}"
+                                        th:text="${r.ukrainianName}"
+                                        th:selected="${r == user.role}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 d-flex align-items-center mt-4 mt-md-auto mb-1">
+                            <div class="form-check form-switch fs-5">
+                                <input type="hidden" name="_enabled" value="on">
+                                <input class="form-check-input" type="checkbox" role="switch" name="enabled" value="true" th:checked="${user.enabled}" id="enabledSwitch">
+                                <label class="form-check-label text-danger fw-bold ms-2" for="enabledSwitch" style="font-size: 1rem;">Акаунт активний</label>
+                            </div>
+                        </div>
+                    </div>
 
+                    <div class="mb-4 p-3 bg-light rounded border">
+                        <label class="form-label fw-bold text-danger"><i class="bi bi-shield-lock me-1"></i> Скинути пароль</label>
+                        <input type="password" name="newPassword" class="form-control" autocomplete="new-password" placeholder="Введіть новий пароль">
+                        <div class="form-text mt-2" style="font-size: 0.75rem;">Залиште порожнім, якщо не бажаєте змінювати поточний пароль.</div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row justify-content-between mt-5 gap-3">
+                        <a href="/users" class="btn btn-secondary px-4 w-100 w-sm-auto shadow-sm">Скасувати</a>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold w-100 w-sm-auto shadow-sm">Зберегти зміни</button>
+                    </div>
+                </form>
+
+            </div>
         </div>
     </div>
 </div>

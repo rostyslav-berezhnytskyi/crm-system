@@ -10,6 +10,9 @@ import com.els.crmsystem.repository.ProjectRepository;
 import com.els.crmsystem.repository.TransactionRepository;
 import com.els.crmsystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -173,5 +176,14 @@ public class TransactionService {
         }
         // Optional: In the future, you might want to delete the actual files from disk here too.
         transactionRepository.deleteById(id);
+    }
+
+    // --- PAGINATED READ METHOD ---
+    public Page<TransactionOutputDto> getTransactionsPage(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Transaction> transactionPage = transactionRepository.findAllByOrderByDateDesc(pageable);
+
+        // Magically map the Page of Entities to a Page of DTOs!
+        return transactionPage.map(mapper::toOutputDto);
     }
 }

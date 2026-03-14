@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>ELS CRM - Редагувати проєкт</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>body { background-color: #f4f6f9; }</style>
-</head>
+
+<head th:replace="~{fragments :: head('ELS CRM - Редагувати проєкт')}"></head>
+
 <body>
 
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
+<nav th:replace="~{fragments :: navbar}"></nav>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">✏️ Редагувати проєкт: <span th:text="${project.name()}"></span></h5>
-                    <a href="/projects" class="btn btn-sm btn-outline-dark">Повернутися до списку</a>
+<div class="container-fluid px-3 px-md-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+
+            <div class="card shadow-sm mb-4 border-0">
+
+                <div class="card-header bg-warning text-dark d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                    <h5 class="mb-0">✏️ Редагувати: <span class="fw-bold" th:text="${project.name()}"></span></h5>
+
+                    <div class="d-grid d-sm-block">
+                        <a href="/projects" class="btn btn-sm btn-outline-dark text-nowrap">Повернутися до списку</a>
+                    </div>
                 </div>
+
                 <div class="card-body">
                     <form th:action="@{/projects/update/{id}(id=${project.id()})}" method="post">
-                        <div class="row mb-3">
+                        <div class="row mb-3 gy-3">
                             <div class="col-md-8">
                                 <label class="form-label fw-bold">Назва проєкту *</label>
                                 <input type="text" name="name" class="form-control" th:value="${project.name()}" required>
@@ -37,7 +41,7 @@
                             <label class="form-label fw-bold">Розташування</label>
                             <div class="input-group mb-2">
                                 <input type="text" name="addressText" id="editAddress" class="form-control" th:value="${project.addressText()}" required>
-                                <button type="button" class="btn btn-secondary" onclick="geocodeEditAddress()">Знайти координати</button>
+                                <button type="button" class="btn btn-secondary" onclick="geocodeEditAddress()"><i class="bi bi-geo-alt"></i> Знайти</button>
                             </div>
                             <div class="row">
                                 <div class="col-6"><input type="text" name="latitude" id="editLat" class="form-control form-control-sm text-muted" th:value="${project.latitude()}" readonly></div>
@@ -45,7 +49,7 @@
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row mb-3 gy-3">
                             <div class="col-md-4">
                                 <label class="form-label text-muted small fw-bold">Клієнт</label>
                                 <select name="clientId" class="form-select">
@@ -73,7 +77,10 @@
                             <label class="form-label fw-bold">Опис</label>
                             <textarea name="description" class="form-control" rows="3" th:text="${project.description()}"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Зберегти зміни</button>
+
+                        <div class="d-grid d-md-flex justify-content-md-end mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm px-5">Зберегти зміни</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -83,9 +90,9 @@
                     <h5 class="mb-0">📸 Галерея проєкту (Фото та Документи)</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
+                    <div class="row g-4">
 
-                        <div class="col-md-5 border-end">
+                        <div class="col-md-5 border-md-end border-bottom border-md-bottom-0 pb-4 pb-md-0">
                             <h6 class="fw-bold mb-3">Завантажити файл</h6>
                             <form th:action="@{/projects/{id}/media(id=${project.id()})}" method="post" enctype="multipart/form-data">
                                 <div class="mb-3">
@@ -106,15 +113,15 @@
                             </div>
 
                             <div class="list-group" style="max-height: 400px; overflow-y: auto;">
-                                <div th:each="media : ${gallery}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
-                                    <div class="ms-2 me-auto">
-                                        <div class="fw-bold text-primary">
+                                <div th:each="media : ${gallery}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <div class="pe-2 text-truncate">
+                                        <div class="fw-bold text-primary text-truncate">
                                             <a th:href="@{'/uploads/' + ${media.fileUrl()}}" target="_blank">Переглянути файл <i class="bi bi-box-arrow-up-right"></i></a>
                                         </div>
-                                        <span class="text-dark" th:text="${media.description()}"></span><br>
+                                        <span class="text-dark d-block text-truncate" th:text="${media.description()}"></span>
                                         <small class="text-muted" th:text="${#temporals.format(media.uploadedAt(), 'dd-MM-yyyy HH:mm')}"></small>
                                     </div>
-                                    <form th:action="@{/projects/media/{mediaId}/delete(mediaId=${media.id()})}" method="post" onsubmit="return confirm('Видалити цей файл?');">
+                                    <form th:action="@{/projects/media/{mediaId}/delete(mediaId=${media.id()})}" method="post" onsubmit="return confirm('Видалити цей файл?');" class="flex-shrink-0">
                                         <input type="hidden" name="projectId" th:value="${project.id()}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
                                     </form>

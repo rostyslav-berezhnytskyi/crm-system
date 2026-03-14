@@ -1,11 +1,16 @@
 package com.els.crmsystem.controller.api;
 
 import com.els.crmsystem.dto.input.TransactionInputDto;
+import com.els.crmsystem.entity.Transaction;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType; // Import this!
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

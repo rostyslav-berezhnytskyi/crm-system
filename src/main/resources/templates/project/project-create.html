@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>ELS CRM - Новий проєкт</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>body { background-color: #f4f6f9; }</style>
-</head>
+
+<head th:replace="~{fragments :: head('ELS CRM - Новий проєкт')}"></head>
+
 <body>
 
-<div class="container mt-5 mb-5">
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container-fluid px-3 px-md-4 mt-4 mb-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-12 col-lg-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">📝 Створити новий проєкт</h5>
@@ -32,9 +31,9 @@
                             <label class="fw-bold form-label">Розташування об'єкта *</label>
                             <div class="input-group mb-2">
                                 <input type="text" th:field="*{addressText}" id="addressInput" class="form-control" placeholder="Київ, вул. Абалмасова 1" required>
-                                <button type="button" class="btn btn-secondary" onclick="geocodeAddress()">📍 Знайти координати</button>
+                                <button type="button" class="btn btn-secondary" onclick="geocodeAddress()"><i class="bi bi-geo-alt"></i> Знайти</button>
                             </div>
-                            <div class="row">
+                            <div class="row g-2">
                                 <div class="col-6">
                                     <input type="text" th:field="*{latitude}" id="latInput" class="form-control text-muted" placeholder="Широта (Авто)" readonly>
                                 </div>
@@ -44,7 +43,7 @@
                             </div>
                         </div>
 
-                        <div class="row mb-4">
+                        <div class="row mb-4 gy-3">
                             <div class="col-md-4">
                                 <label class="fw-bold text-muted small form-label">Клієнт (ОСББ, Власник)</label>
                                 <select th:field="*{clientId}" class="form-select">
@@ -73,9 +72,9 @@
                             <textarea th:field="*{description}" class="form-control" rows="3" placeholder="Деталі системи, потужність, специфікації..."></textarea>
                         </div>
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="/projects" class="btn btn-secondary px-4">Скасувати</a>
-                            <button type="submit" class="btn btn-primary px-5 fw-bold">Створити проєкт</button>
+                        <div class="d-flex flex-column flex-sm-row justify-content-between mt-4 gap-2">
+                            <a href="/projects" class="btn btn-secondary px-4 w-100 w-sm-auto">Скасувати</a>
+                            <button type="submit" class="btn btn-primary px-5 fw-bold w-100 w-sm-auto">Створити проєкт</button>
                         </div>
                     </form>
 

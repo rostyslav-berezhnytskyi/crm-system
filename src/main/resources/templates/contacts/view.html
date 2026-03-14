@@ -1,72 +1,66 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>ELS CRM - Профіль контакту</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>body { background-color: #f4f6f9; }</style>
-</head>
-<body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
-    <div class="container-fluid px-4">
-        <a class="navbar-brand fw-bold" href="/">ELS CRM</a>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="/projects">Проєкти</a></li>
-                <li class="nav-item"><a class="nav-link" href="/transactions">Транзакції</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/contacts">Контакти</a></li>
-                <li class="nav-item"><a class="nav-link" href="/companies">Компанії</a></li>
-                <li class="nav-item"><a class="nav-link" href="/users">Співробітники</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<head th:replace="~{fragments :: head('ELS CRM - Профіль контакту')}"></head>
 
-<div class="container mb-5">
+<body class="bg-light">
+
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container-fluid px-3 px-md-4 mt-4 mb-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">👤 Профіль контакту</h5>
-                    <a href="/contacts" class="btn btn-sm btn-outline-light">Повернутися до списку</a>
-                </div>
-                <div class="card-body p-4">
+        <div class="col-12 col-lg-8 col-xl-7">
+            <div class="card shadow-sm border-0" style="border-radius: 12px;">
 
-                    <div class="d-flex align-items-center mb-4">
-                        <h2 class="fw-bold mb-0 me-3" th:text="${contact.name()}"></h2>
-                        <span class="badge bg-info text-dark fs-6" th:text="${contact.role().getUkrainianName()}"></span>
+                <div class="card-header bg-dark text-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center py-3 gap-3">
+                    <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i> Профіль контакту</h5>
+                    <div class="d-grid d-sm-block">
+                        <a href="/contacts" class="btn btn-sm btn-outline-light text-nowrap w-100 w-sm-auto shadow-sm">Повернутися до списку</a>
                     </div>
+                </div>
 
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted fw-bold">Компанія:</div>
-                        <div class="col-sm-8">
-                            <i class="bi bi-building text-primary"></i>
-                            <a th:if="${contact.companyId() != null}" th:href="@{/companies/{id}(id=${contact.companyId()})}" class="fw-bold text-decoration-none" th:text="${contact.companyName()}"></a>
-                            <span th:if="${contact.companyId() == null}" class="text-muted">- Незалежний -</span>
+                <div class="card-body p-4 p-md-5">
+
+                    <div class="d-flex flex-column flex-md-row align-items-md-center mb-4 gap-2">
+                        <h2 class="fw-bold mb-0 text-dark" th:text="${contact.name()}"></h2>
+                        <div>
+                            <span class="badge bg-primary bg-opacity-10 text-primary fs-6 border border-primary-subtle" th:text="${contact.role().getUkrainianName()}"></span>
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted fw-bold">Телефон:</div>
-                        <div class="col-sm-8"><i class="bi bi-telephone text-primary"></i> <span th:text="${contact.phone() != null and !contact.phone().isEmpty() ? contact.phone() : '—'}"></span></div>
+                    <div class="bg-white border rounded p-3 p-md-4 shadow-sm mb-4">
+                        <div class="row gy-3 align-items-center">
+                            <div class="col-12 col-sm-4 text-muted fw-bold small"><i class="bi bi-building me-1"></i> Компанія:</div>
+                            <div class="col-12 col-sm-8">
+                                <a th:if="${contact.companyId() != null}" th:href="@{/companies/{id}(id=${contact.companyId()})}" class="fw-bold text-decoration-none fs-6" th:text="${contact.companyName()}"></a>
+                                <span th:if="${contact.companyId() == null}" class="text-muted">- Незалежний -</span>
+                            </div>
+
+                            <div class="col-12"><hr class="m-0 text-muted opacity-25"></div>
+
+                            <div class="col-12 col-sm-4 text-muted fw-bold small"><i class="bi bi-telephone me-1"></i> Телефон:</div>
+                            <div class="col-12 col-sm-8 text-dark fw-bold" th:text="${contact.phone() != null and !contact.phone().isEmpty() ? contact.phone() : '—'}"></div>
+
+                            <div class="col-12"><hr class="m-0 text-muted opacity-25"></div>
+
+                            <div class="col-12 col-sm-4 text-muted fw-bold small"><i class="bi bi-envelope me-1"></i> Email:</div>
+                            <div class="col-12 col-sm-8 text-dark text-break" th:text="${contact.email() != null and !contact.email().isEmpty() ? contact.email() : '—'}"></div>
+                        </div>
                     </div>
 
-                    <div class="row mb-4">
-                        <div class="col-sm-4 text-muted fw-bold">Електронна пошта:</div>
-                        <div class="col-sm-8"><i class="bi bi-envelope text-primary"></i> <span th:text="${contact.email() != null and !contact.email().isEmpty() ? contact.email() : '—'}"></span></div>
+                    <div class="p-3 p-md-4 bg-light rounded border mb-5">
+                        <h6 class="fw-bold text-muted border-bottom pb-2 mb-3"><i class="bi bi-journal-text me-1"></i> Нотатки</h6>
+                        <p class="mb-0 text-dark" style="white-space: pre-wrap; word-wrap: break-word;" th:text="${contact.notes() != null and !contact.notes().isEmpty() ? contact.notes() : 'Нотатки відсутні.'}"></p>
                     </div>
 
-                    <div class="p-3 bg-light rounded border mb-4">
-                        <h6 class="fw-bold text-muted border-bottom pb-2">📝 Нотатки</h6>
-                        <p class="mb-0" style="white-space: pre-wrap;" th:text="${contact.notes() != null and !contact.notes().isEmpty() ? contact.notes() : 'Нотатки відсутні.'}"></p>
-                    </div>
-
-                    <div class="d-flex justify-content-end border-top pt-3">
-                        <a th:href="@{/contacts/edit/{id}(id=${contact.id()})}" class="btn btn-warning me-2"><i class="bi bi-pencil"></i> Редагувати</a>
-                        <form th:action="@{/contacts/delete/{id}(id=${contact.id()})}" method="post" onsubmit="return confirm('Ви впевнені, що хочете видалити цей контакт?');">
-                            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Видалити</button>
+                    <div class="d-flex flex-column flex-sm-row justify-content-end gap-3 pt-3 border-top">
+                        <a th:href="@{/contacts/edit/{id}(id=${contact.id()})}" class="btn btn-warning px-4 fw-bold w-100 w-sm-auto shadow-sm">
+                            <i class="bi bi-pencil-square me-1"></i> Редагувати
+                        </a>
+                        <form th:action="@{/contacts/delete/{id}(id=${contact.id()})}" method="post" onsubmit="return confirm('Ви впевнені, що хочете видалити цей контакт?');" class="w-100 w-sm-auto">
+                            <button type="submit" class="btn btn-danger px-4 fw-bold w-100 shadow-sm">
+                                <i class="bi bi-trash me-1"></i> Видалити
+                            </button>
                         </form>
                     </div>
 
