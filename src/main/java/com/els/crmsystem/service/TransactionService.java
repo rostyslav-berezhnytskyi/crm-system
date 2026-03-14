@@ -50,8 +50,8 @@ public class TransactionService {
 
         // 3. Handle File Uploads (Save to Disk -> Get String Path)
         // returns null if no file sent
-        String receiptPath = fileStorageService.saveFile(dto.receiptFile());
-        String itemImagePath = fileStorageService.saveFile(dto.itemImageFile());
+        String receiptPath = fileStorageService.saveTransactionFile(dto.receiptFile(), project.getId());
+        String itemImagePath = fileStorageService.saveTransactionFile(dto.itemImageFile(), project.getId());
 
         // 4. Map DTO -> Entity
         // We do this manually here because we need to inject the found User and Project objects
@@ -110,20 +110,15 @@ public class TransactionService {
 
         // --- Handle Receipt ---
         if (dto.receiptFile() != null && !dto.receiptFile().isEmpty()) {
-            // A. User uploaded a NEW file.
-            // B. Delete the OLD file if it exists
             deleteFile(transaction.getReceiptUrl());
-
-            // C. Save the NEW file
-            String newFileName = fileStorageService.saveFile(dto.receiptFile());
+            String newFileName = fileStorageService.saveTransactionFile(dto.receiptFile(), project.getId());
             transaction.setReceiptUrl(newFileName);
         }
-        // If dto.receiptFile() is empty, we DO NOTHING (keep the old url)
 
         // --- Handle Item Photo ---
         if (dto.itemImageFile() != null && !dto.itemImageFile().isEmpty()) {
             deleteFile(transaction.getItemImageUrl());
-            String newFileName = fileStorageService.saveFile(dto.itemImageFile());
+            String newFileName = fileStorageService.saveTransactionFile(dto.itemImageFile(), project.getId());
             transaction.setItemImageUrl(newFileName);
         }
 

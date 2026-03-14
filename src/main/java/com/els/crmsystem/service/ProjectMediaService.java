@@ -38,7 +38,7 @@ public class ProjectMediaService {
         media.setProject(project);
         media.setFileUrl(savedFilePath);
         media.setFileType(file.getContentType()); // Grabs "image/jpeg" or "video/mp4" automatically
-        media.setDescription(description);
+        media.setDescription(description != null ? description : "");
 
         mediaRepository.save(media);
     }

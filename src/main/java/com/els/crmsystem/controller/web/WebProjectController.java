@@ -134,10 +134,18 @@ public class WebProjectController {
     // CHANGE REDIRECT HERE:
     @PostMapping("/projects/{id}/media")
     public String uploadMedia(@PathVariable Long id,
-                              @RequestParam("file") MultipartFile file,
-                              @RequestParam("description") String description) {
-        mediaService.uploadMedia(id, file, description);
-        // Redirect back to the view page, not the edit page!
+                              @RequestParam("files") java.util.List<MultipartFile> files, // <--- Now expects a List!
+                              @RequestParam(value = "description", required = false) String description) {
+
+        // Loop through every file the user selected
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                // We reuse your exact same service method for each file!
+                mediaService.uploadMedia(id, file, description);
+            }
+        }
+
+        // Redirect back to the view page
         return "redirect:/projects/" + id;
     }
 
