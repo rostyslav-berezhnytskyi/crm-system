@@ -120,4 +120,18 @@ public class Transaction {
             this.date = LocalDateTime.now();
         }
     }
+
+    /**
+     * The company we bought from (e.g., Solarverse)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_company_id")
+    private Company sellerCompany;
+
+    /**
+     * The private person we bought from (e.g., Vitalka from OLX)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_contact_id")
+    private Contact sellerContact;
 }

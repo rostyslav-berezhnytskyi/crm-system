@@ -20,6 +20,9 @@ public record TransactionInputDto(
         @NotNull(message = "You must select a Project")
         Long projectId,
 
+        // Accepts "COMP_1" or "CONT_5" from the HTML dropdown
+        String sellerValue,
+
         @NotNull(message = "Transaction Type is required")
         TransactionType type,
 

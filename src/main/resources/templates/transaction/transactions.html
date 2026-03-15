@@ -25,6 +25,7 @@
                 <tr>
                     <th style="width: 100px;">Дата</th>
                     <th style="width: 15%;">Проєкт</th>
+                    <th style="width: 15%;">Постачальник</th>
                     <th>Опис</th>
                     <th style="width: 12%;">Категорія</th>
                     <th style="width: 100px;" class="text-center">Тип</th>
@@ -39,6 +40,11 @@
 
                     <td class="text-truncate" th:title="${t.projectName}">
                         <strong th:text="${t.projectName}"></strong>
+                    </td>
+
+                    <td>
+                        <a th:if="${t.sellerName != null}" th:href="${t.sellerUrl}" class="fw-bold text-decoration-none text-primary small text-truncate d-block" th:title="${t.sellerName}" th:text="${t.sellerName}"></a>
+                        <span th:if="${t.sellerName == null}" class="text-muted small">—</span>
                     </td>
 
                     <td>
@@ -83,7 +89,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(transactions)}">
-                    <td colspan="8" class="text-center py-4 text-muted">Транзакції не знайдено.</td>
+                    <td colspan="9" class="text-center py-4 text-muted">Транзакції не знайдено.</td>
                 </tr>
                 </tbody>
             </table>
@@ -110,7 +116,13 @@
                     </div>
 
                     <div class="bg-light p-2 rounded mb-3" style="cursor: pointer;" th:data-desc="${t.description}" onclick="showNoteModal(this.getAttribute('data-desc'))">
-                        <span class="badge bg-secondary mb-1" th:text="${t.category.ukrainianName}"></span>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                            <span class="badge bg-secondary" th:text="${t.category.ukrainianName}"></span>
+                            <div th:if="${t.sellerName != null}" class="d-flex align-items-center text-truncate" style="max-width: 180px;">
+                                <i class="bi bi-shop text-muted me-2 small"></i>
+                                <a th:href="${t.sellerUrl}" class="fw-bold text-decoration-none text-primary small text-truncate" th:title="${t.sellerName}" th:text="${t.sellerName}"></a>
+                            </div>
+                        </div>
                         <p class="mb-0 text-muted small" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" th:text="${t.description}"></p>
                         <div class="text-primary small text-end mt-1">Читати далі...</div>
                     </div>

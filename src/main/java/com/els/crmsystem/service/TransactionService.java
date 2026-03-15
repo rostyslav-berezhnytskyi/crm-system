@@ -6,9 +6,7 @@ import com.els.crmsystem.entity.Project;
 import com.els.crmsystem.entity.Transaction;
 import com.els.crmsystem.entity.User;
 import com.els.crmsystem.mapper.EntityMapper;
-import com.els.crmsystem.repository.ProjectRepository;
-import com.els.crmsystem.repository.TransactionRepository;
-import com.els.crmsystem.repository.UserRepository;
+import com.els.crmsystem.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +28,8 @@ public class TransactionService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final CompanyRepository companyRepository;
+    private final ContactRepository contactRepository;
     private final EntityMapper mapper;
 
     /**
@@ -76,6 +76,20 @@ public class TransactionService {
             transaction.setDate(dto.date());
         }
 
+        // --- SMART SELLER PARSING ---
+        transaction.setSellerCompany(null);
+        transaction.setSellerContact(null);
+
+        if (dto.sellerValue() != null && !dto.sellerValue().isBlank()) {
+            if (dto.sellerValue().startsWith("COMP_")) {
+                Long compId = Long.parseLong(dto.sellerValue().replace("COMP_", ""));
+                companyRepository.findById(compId).ifPresent(transaction::setSellerCompany);
+            } else if (dto.sellerValue().startsWith("CONT_")) {
+                Long contId = Long.parseLong(dto.sellerValue().replace("CONT_", ""));
+                contactRepository.findById(contId).ifPresent(transaction::setSellerContact);
+            }
+        }
+
         // 7. Save
         transactionRepository.save(transaction);
     }
@@ -120,6 +134,20 @@ public class TransactionService {
             deleteFile(transaction.getItemImageUrl());
             String newFileName = fileStorageService.saveTransactionFile(dto.itemImageFile(), project.getId());
             transaction.setItemImageUrl(newFileName);
+        }
+
+        // --- SMART SELLER PARSING ---
+        transaction.setSellerCompany(null);
+        transaction.setSellerContact(null);
+
+        if (dto.sellerValue() != null && !dto.sellerValue().isBlank()) {
+            if (dto.sellerValue().startsWith("COMP_")) {
+                Long compId = Long.parseLong(dto.sellerValue().replace("COMP_", ""));
+                companyRepository.findById(compId).ifPresent(transaction::setSellerCompany);
+            } else if (dto.sellerValue().startsWith("CONT_")) {
+                Long contId = Long.parseLong(dto.sellerValue().replace("CONT_", ""));
+                contactRepository.findById(contId).ifPresent(transaction::setSellerContact);
+            }
         }
 
         transactionRepository.save(transaction);

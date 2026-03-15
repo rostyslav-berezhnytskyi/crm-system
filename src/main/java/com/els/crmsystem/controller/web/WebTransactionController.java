@@ -6,6 +6,8 @@ import com.els.crmsystem.enums.PaymentMethod;
 import com.els.crmsystem.enums.TransactionCategory;
 import com.els.crmsystem.enums.TransactionType;
 import com.els.crmsystem.mapper.EntityMapper;
+import com.els.crmsystem.service.CompanyService;
+import com.els.crmsystem.service.ContactService;
 import com.els.crmsystem.service.ProjectService;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
@@ -25,6 +27,8 @@ public class WebTransactionController {
     private final TransactionService transactionService;
     private final ProjectService projectService;
     private final EntityMapper mapper;
+    private final CompanyService companyService;
+    private final ContactService contactService;
 
     // --- 1. LIST PAGE (WITH PAGINATION & SORTING) ---
     @GetMapping("/transactions")
@@ -46,15 +50,15 @@ public class WebTransactionController {
     // --- 2. CREATE FORM ---
     @GetMapping("/transactions/new")
     public String showCreateForm(@RequestParam(value = "projectId", required = false) Long projectId, Model model) {
-        // Create an empty DTO but pre-fill the projectId if it came from the URL
+        // ADDED ONE EXTRA NULL HERE FOR sellerValue
         TransactionInputDto dto = new TransactionInputDto(
-                projectId, null, null, null, null, null, null, null, null
+                projectId, null, null, null, null, null, null, null, null, null
         );
 
         model.addAttribute("transaction", dto);
         prepareDropdownData(model);
 
-        return "transaction/transaction-form"; // Fixed to singular folder name
+        return "transaction/transaction-form";
     }
 
     // --- 3. HANDLE CREATE ACTION ---
@@ -133,12 +137,18 @@ public class WebTransactionController {
 
     // --- HELPER: Loads Dropdown Data ---
     private void prepareDropdownData(Model model) {
-        // 1. Projects List (Only active ones!)
         model.addAttribute("projects", projectService.getAllActiveProjects());
 
-        // 2. Enums for <select> options
-        model.addAttribute("types", TransactionType.values());       // INCOME, EXPENSE
-        model.addAttribute("categories", TransactionCategory.values()); // MATERIALS, SALARY...
-        model.addAttribute("paymentMethods", PaymentMethod.values());   // CASH, CARD...
+        // ADD THESE TWO LINES FOR THE OPTGROUPS:
+        model.addAttribute("companies", companyService.getAllActiveCompanies());
+        // FILTER: Only pass contacts who have the DEALER (or SELLER) role!
+        // Make sure to match the exact Enum name you are using in your code.
+        model.addAttribute("contacts", contactService.getAllActiveContacts().stream()
+                .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.DEALER)
+                .toList());
+
+        model.addAttribute("types", TransactionType.values());
+        model.addAttribute("categories", TransactionCategory.values());
+        model.addAttribute("paymentMethods", PaymentMethod.values());
     }
 }

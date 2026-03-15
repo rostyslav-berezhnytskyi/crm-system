@@ -16,6 +16,9 @@ public record TransactionOutputDto(
 
         String projectName,     // Resolved name (e.g., "Kyiv Office") instead of just ID
 
+        String sellerName, // Unified name for the frontend table
+        String sellerUrl,
+
         TransactionType type,
         BigDecimal amount,
         TransactionCategory category,

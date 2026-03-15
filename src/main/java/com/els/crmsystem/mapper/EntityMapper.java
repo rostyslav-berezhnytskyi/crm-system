@@ -108,11 +108,30 @@ public class EntityMapper {
     // TRANSACTION MAPPINGS
     // ==========================================
 
+    // ==========================================
+    // TRANSACTION MAPPINGS
+    // ==========================================
+
     public TransactionOutputDto toOutputDto(Transaction transaction) {
         if (transaction == null) return null;
+
+        // Figure out who the seller is for the UI Table
+        String sellerName = null;
+        String sellerUrl = null;
+
+        if (transaction.getSellerCompany() != null) {
+            sellerName = "🏢 " + transaction.getSellerCompany().getName();
+            sellerUrl = "/companies/" + transaction.getSellerCompany().getId(); // <--- ЗМІНА ТУТ
+        } else if (transaction.getSellerContact() != null) {
+            sellerName = "👤 " + transaction.getSellerContact().getName();
+            sellerUrl = "/contacts/" + transaction.getSellerContact().getId(); // <--- ЗМІНА ТУТ
+        }
+
         return new TransactionOutputDto(
                 transaction.getId(),
-                transaction.getProject().getName(), // Resolve name here
+                transaction.getProject().getName(),
+                sellerName,
+                sellerUrl,
                 transaction.getType(),
                 transaction.getAmount(),
                 transaction.getCategory(),
@@ -127,18 +146,25 @@ public class EntityMapper {
     public TransactionInputDto toInputDto(Transaction transaction) {
         if (transaction == null) return null;
 
-        // We pass NULL for the files, because we can't turn a saved file back into a "MultipartFile" object.
-        // The controller handles showing the "Current File" link separately.
+        // Reconstruct the prefixed string so the HTML Dropdown pre-selects the right option
+        String sellerValue = null;
+        if (transaction.getSellerCompany() != null) {
+            sellerValue = "COMP_" + transaction.getSellerCompany().getId();
+        } else if (transaction.getSellerContact() != null) {
+            sellerValue = "CONT_" + transaction.getSellerContact().getId();
+        }
+
         return new TransactionInputDto(
-                transaction.getProject().getId(),   // Extract ID for the dropdown
+                transaction.getProject().getId(),
+                sellerValue, // <-- Injected here
                 transaction.getType(),
                 transaction.getAmount(),
                 transaction.getCategory(),
                 transaction.getPaymentMethod(),
                 transaction.getDescription(),
                 transaction.getDate(),
-                null, // receiptFile (Keep empty)
-                null  // itemImageFile (Keep empty)
+                null,
+                null
         );
     }
 
