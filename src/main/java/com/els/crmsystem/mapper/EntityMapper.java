@@ -181,7 +181,11 @@ public class EntityMapper {
                 company.getMainPhone(),
                 company.getEmail(),
                 company.getNotes(),
-                company.isActive()
+                company.isActive(),
+                // Мапимо всі контакти цієї компанії:
+                company.getContacts().stream()
+                        .map(this::toOutputDto)
+                        .toList()
         );
     }
 

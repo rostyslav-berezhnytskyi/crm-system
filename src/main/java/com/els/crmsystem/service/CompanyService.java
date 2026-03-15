@@ -32,6 +32,7 @@ public class CompanyService {
         companyRepository.save(company);
     }
 
+    @Transactional(readOnly = true)
     public CompanyOutputDto getCompanyById(Long id) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Компанію не знайдено"));

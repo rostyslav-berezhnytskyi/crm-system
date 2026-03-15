@@ -51,6 +51,42 @@
                     </div>
 
                     <div class="card shadow-sm border-0 mb-4 bg-light">
+
+                        <div class="card shadow-sm border-0 mb-4 bg-light">
+                            <div class="card-header bg-dark text-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-people me-1"></i> Контактні особи</span>
+
+                                <a th:href="@{/contacts/new(companyId=${company.id})}" class="btn btn-sm btn-primary fw-bold shadow-sm">
+                                    <i class="bi bi-person-plus me-1"></i> Додати
+                                </a>
+                            </div>
+
+                            <div class="card-body p-0 bg-white">
+                                <ul class="list-group list-group-flush">
+                                    <li th:each="contact : ${company.contacts}" class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                        <div>
+                                            <a th:href="@{/contacts/{id}(id=${contact.id})}" class="fw-bold text-dark text-decoration-none d-block mb-1 fs-6" th:text="${contact.name}"></a>
+
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle me-2" th:text="${contact.role.ukrainianName}"></span>
+                                            <span class="text-muted small" th:if="${contact.phone != null and !contact.phone.isEmpty()}">
+                                            <i class="bi bi-telephone me-1"></i><span th:text="${contact.phone}"></span>
+                                        </span>
+                                        </div>
+
+                                        <div class="d-flex align-items-center">
+                                            <a th:if="${contact.phone != null and !contact.phone.isEmpty()}" th:href="'tel:' + ${contact.phone}" class="btn btn-sm btn-light border rounded-circle shadow-sm" title="Зателефонувати">
+                                                <i class="bi bi-telephone-fill text-success"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+
+                                    <li th:if="${#lists.isEmpty(company.contacts)}" class="list-group-item text-center text-muted py-4 bg-light">
+                                        До цієї компанії ще не прив'язано жодного співробітника.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <div class="card-header bg-dark text-white fw-bold py-3">
                             <i class="bi bi-folder me-1"></i> Офіційні документи та Реквізити
                         </div>
