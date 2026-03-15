@@ -1,6 +1,7 @@
 package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.CompanyInputDto;
+import com.els.crmsystem.service.CompanyDocumentService;
 import com.els.crmsystem.service.CompanyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 @RequestMapping("/companies")
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class CompanyController {
 
     private final CompanyService companyService;
+    private final CompanyDocumentService documentService;
 
     // 1. Show the list of all active companies
     @GetMapping
@@ -34,7 +37,11 @@ public class CompanyController {
     @GetMapping("/{id}")
     public String viewCompany(@PathVariable Long id, Model model) {
         model.addAttribute("company", companyService.getCompanyById(id));
-        return "companies/view";
+
+        // Pass the documents to the HTML!
+        model.addAttribute("documents", documentService.getDocumentsForCompany(id));
+
+        return "companies/view"; // (Or whatever your path is to company-view.html)
     }
 
     // 3. Process the form submission
@@ -71,5 +78,23 @@ public class CompanyController {
     public String deleteCompany(@PathVariable Long id) {
         companyService.deactivateCompany(id);
         return "redirect:/companies";
+    }
+
+    @PostMapping("/{id}/documents")
+    public String uploadDocuments(@PathVariable Long id,
+                                  @RequestParam("files") java.util.List<MultipartFile> files,
+                                  @RequestParam(value = "description", required = false) String description) {
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                documentService.uploadDocument(id, file, description);
+            }
+        }
+        return "redirect:/companies/" + id;
+    }
+
+    @PostMapping("/documents/{docId}/delete")
+    public String deleteDocument(@PathVariable Long docId, @RequestParam("companyId") Long companyId) {
+        documentService.deleteDocument(docId);
+        return "redirect:/companies/" + companyId;
     }
 }

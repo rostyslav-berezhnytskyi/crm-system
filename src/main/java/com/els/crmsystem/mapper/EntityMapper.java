@@ -208,4 +208,19 @@ public class EntityMapper {
                 equipment.getNotes()
         );
     }
+
+    // ==========================================
+    // COMPANY DOCUMENT MAPPINGS
+    // ==========================================
+    public CompanyDocumentOutputDto toOutputDto(CompanyDocument document) {
+        if (document == null) return null;
+
+        return new CompanyDocumentOutputDto(
+                document.getId(),
+                document.getFileUrl(),
+                document.getFileType(),
+                document.getDescription(),
+                document.getUploadedAt()
+        );
+    }
 }

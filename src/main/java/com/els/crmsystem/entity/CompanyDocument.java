@@ -33,4 +33,7 @@ public class CompanyDocument {
     protected void onCreate() {
         this.uploadedAt = LocalDateTime.now();
     }
+
+    @Column(length = 255)
+    private String description;
 }
