@@ -34,8 +34,21 @@ public class ContactController {
 
     // 2. Show the "Create New Contact" form
     @GetMapping("/new")
-    public String showCreateForm(Model model) {
-        model.addAttribute("contact", new ContactInputDto(null, "", ContactRole.OTHER, "", "", ""));
+    public String showCreateForm(
+            // ADD THIS PARAMETER: It grabs the ID from the URL if it exists!
+            @RequestParam(value = "companyId", required = false) Long companyId,
+            Model model) {
+
+        // Pass the grabbed companyId into the DTO instead of 'null'
+        model.addAttribute("contact", new ContactInputDto(
+                companyId, // <--- If from main menu, this is null. If from Company view, this is the ID!
+                "",
+                ContactRole.OTHER,
+                "",
+                "",
+                ""
+        ));
+
         populateDropdowns(model);
         return "contacts/form";
     }
