@@ -23,10 +23,18 @@
                     <form th:action="${companyId == null ? '/companies' : '/companies/edit/' + companyId}"
                           th:object="${company}" method="post">
 
-                        <div class="mb-4">
-                            <label class="form-label fw-bold text-muted small"><i class="bi bi-building me-1"></i> Назва компанії *</label>
-                            <input type="text" class="form-control form-control-lg" th:field="*{name}" placeholder="Наприклад: ТОВ ЕнергоЛайф" required>
-                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                        <div class="row mb-4 gy-3">
+                            <div class="col-12 col-md-8">
+                                <label class="form-label fw-bold text-muted small"><i class="bi bi-building me-1"></i> Назва компанії *</label>
+                                <input type="text" class="form-control form-control-lg" th:field="*{name}" placeholder="Наприклад: ТОВ ЕнергоЛайф" required>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-bold text-muted small"><i class="bi bi-tag me-1"></i> Тип компанії *</label>
+                                <select class="form-select form-select-lg" th:field="*{role}" required>
+                                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r.ukrainianName}"></option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="row mb-4 gy-3">

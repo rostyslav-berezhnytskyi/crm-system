@@ -2,6 +2,9 @@ package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.EquipmentInputDto;
 import com.els.crmsystem.dto.input.ProjectInputDto;
+import com.els.crmsystem.enums.PaymentMethod;
+import com.els.crmsystem.enums.TransactionCategory;
+import com.els.crmsystem.enums.TransactionType;
 import com.els.crmsystem.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -22,10 +25,22 @@ public class WebProjectController {
     private final TransactionService transactionService;
 
     private void populateDropdowns(Model model) {
-        model.addAttribute("contacts", contactService.getAllActiveContacts());
-        model.addAttribute("companies", companyService.getAllActiveCompanies());
-    }
 
+        // 1. Filtered List for the "Client" Dropdown (Only CLIENT contacts)
+        model.addAttribute("clientContacts", contactService.getAllActiveContacts().stream()
+                .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.CLIENT)
+                .toList());
+
+        // 2. Filtered List for the "Installer" Dropdown (Only INSTALLER contacts)
+        model.addAttribute("installerContacts", contactService.getAllActiveContacts().stream()
+                .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.INSTALLER)
+                .toList());
+
+        // 3. Filtered List for the "Equipment Dealer" Dropdown (Only DEALER companies)
+        model.addAttribute("dealerCompanies", companyService.getAllActiveCompanies().stream()
+                .filter(c -> c.role() == com.els.crmsystem.enums.CompanyRole.DEALER)
+                .toList());
+    }
 
     // View Project Profile (Command Center)
     @GetMapping("/projects/{id}")

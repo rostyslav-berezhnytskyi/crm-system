@@ -1,6 +1,7 @@
 package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.CompanyInputDto;
+import com.els.crmsystem.enums.CompanyRole;
 import com.els.crmsystem.service.CompanyDocumentService;
 import com.els.crmsystem.service.CompanyService;
 import jakarta.validation.Valid;
@@ -19,6 +20,12 @@ public class CompanyController {
     private final CompanyService companyService;
     private final CompanyDocumentService documentService;
 
+    // --- AUTOMATIC DROPDOWNS ---
+    @ModelAttribute("roles")
+    public CompanyRole[] getCompanyRoles() {
+        return CompanyRole.values();
+    }
+
     // 1. Show the list of all active companies
     @GetMapping
     public String listCompanies(Model model) {
@@ -29,7 +36,7 @@ public class CompanyController {
     // 2. Show the "Create New Company" form
     @GetMapping("/new")
     public String showCreateForm(Model model) {
-        model.addAttribute("company", new CompanyInputDto("", "", "", "", ""));
+        model.addAttribute("company", new CompanyInputDto("", CompanyRole.OTHER, "", "", "", ""));
         return "companies/form";
     }
 

@@ -1,6 +1,7 @@
 package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.ContactInputDto;
+import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.enums.ContactRole;
 import com.els.crmsystem.service.CompanyService;
 import com.els.crmsystem.service.ContactService;
@@ -11,6 +12,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/contacts")
 @RequiredArgsConstructor
@@ -19,10 +22,15 @@ public class ContactController {
     private final ContactService contactService;
     private final CompanyService companyService;
 
-    // Load dropdown data for both Create and Edit forms
-    private void populateDropdowns(Model model) {
-        model.addAttribute("roles", ContactRole.values());
-        model.addAttribute("companies", companyService.getAllActiveCompanies());
+    // --- AUTOMATIC DROPDOWNS ---
+    @ModelAttribute("roles")
+    public ContactRole[] getContactRoles() {
+        return ContactRole.values();
+    }
+
+    @ModelAttribute("companies")
+    public List<CompanyOutputDto> getActiveCompanies() {
+        return companyService.getAllActiveCompanies();
     }
 
     // 1. Show the list of all active contacts
@@ -48,8 +56,6 @@ public class ContactController {
                 "",
                 ""
         ));
-
-        populateDropdowns(model);
         return "contacts/form";
     }
 
@@ -64,7 +70,6 @@ public class ContactController {
     @PostMapping
     public String createContact(@Valid @ModelAttribute("contact") ContactInputDto dto, BindingResult result, Model model) {
         if (result.hasErrors()) {
-            populateDropdowns(model); // Reload dropdowns if there is an error!
             return "contacts/form";
         }
         contactService.createContact(dto);
@@ -76,7 +81,6 @@ public class ContactController {
     public String showEditForm(@PathVariable Long id, Model model) {
         model.addAttribute("contact", contactService.getContactForEdit(id));
         model.addAttribute("contactId", id);
-        populateDropdowns(model);
         return "contacts/form";
     }
 
@@ -85,7 +89,6 @@ public class ContactController {
     public String updateContact(@PathVariable Long id, @Valid @ModelAttribute("contact") ContactInputDto dto, BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("contactId", id);
-            populateDropdowns(model);
             return "contacts/form";
         }
         contactService.updateContact(id, dto);

@@ -54,21 +54,21 @@
                                 <label class="form-label text-muted small fw-bold">Клієнт</label>
                                 <select name="clientId" class="form-select">
                                     <option value="">-- Відсутній --</option>
-                                    <option th:each="contact : ${contacts}" th:value="${contact.id()}" th:text="${contact.name()}" th:selected="${project.clientId() == contact.id()}"></option>
+                                    <option th:each="contact : ${clientContacts}" th:value="${contact.id()}" th:text="${contact.name()}" th:selected="${project.clientId() == contact.id()}"></option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label text-muted small fw-bold">Монтажник</label>
                                 <select name="installerId" class="form-select">
                                     <option value="">-- Відсутній --</option>
-                                    <option th:each="contact : ${contacts}" th:value="${contact.id()}" th:text="${contact.name()}" th:selected="${project.installerId() == contact.id()}"></option>
+                                    <option th:each="contact : ${installerContacts}" th:value="${contact.id()}" th:text="${contact.name()}" th:selected="${project.installerId() == contact.id()}"></option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label text-muted small fw-bold">Постачальник обладнання</label>
                                 <select name="equipmentDealerId" class="form-select">
                                     <option value="">-- Відсутній --</option>
-                                    <option th:each="company : ${companies}" th:value="${company.id()}" th:text="${company.name()}" th:selected="${project.equipmentDealerId() == company.id()}"></option>
+                                    <option th:each="company : ${dealerCompanies}" th:value="${company.id()}" th:text="${company.name()}" th:selected="${project.equipmentDealerId() == company.id()}"></option>
                                 </select>
                             </div>
                         </div>

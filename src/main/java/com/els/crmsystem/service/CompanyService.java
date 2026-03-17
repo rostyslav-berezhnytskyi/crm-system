@@ -23,6 +23,7 @@ public class CompanyService {
     public void createCompany(CompanyInputDto dto) {
         Company company = new Company();
         company.setName(dto.name());
+        company.setRole(dto.role());
         company.setWebsite(dto.website());
         company.setMainPhone(dto.mainPhone());
         company.setEmail(dto.email());
@@ -45,6 +46,7 @@ public class CompanyService {
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
 
         company.setName(dto.name());
+        company.setRole(dto.role());
         company.setWebsite(dto.website());
         company.setMainPhone(dto.mainPhone());
         company.setEmail(dto.email());
@@ -63,8 +65,12 @@ public class CompanyService {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
         return new CompanyInputDto(
-                company.getName(), company.getWebsite(),
-                company.getMainPhone(), company.getEmail(), company.getNotes()
+                company.getName(),
+                company.getRole(),
+                company.getWebsite(),
+                company.getMainPhone(),
+                company.getEmail(),
+                company.getNotes()
         );
     }
 

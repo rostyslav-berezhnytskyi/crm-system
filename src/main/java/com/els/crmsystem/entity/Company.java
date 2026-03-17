@@ -1,5 +1,6 @@
 package com.els.crmsystem.entity;
 
+import com.els.crmsystem.enums.CompanyRole;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;
@@ -19,6 +20,10 @@ public class Company {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private CompanyRole role = CompanyRole.OTHER;
 
     @Column(length = 255)
     private String website;

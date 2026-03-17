@@ -35,7 +35,10 @@
 
                 <tr th:each="company : ${companies}" class="clickable-row" th:data-href="@{/companies/{id}(id=${company.id()})}">
                     <td class="ps-4 text-truncate">
-                        <strong class="text-dark fs-6 d-block text-truncate" th:text="${company.name()}" th:title="${company.name()}"></strong>
+                        <div class="d-flex align-items-center gap-2">
+                            <strong class="text-dark fs-6 d-block text-truncate" th:text="${company.name()}" th:title="${company.name()}"></strong>
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle" th:text="${company.role().getUkrainianName()}"></span>
+                        </div>
                     </td>
 
                     <td class="text-truncate">
@@ -74,7 +77,10 @@
 
             <div th:each="company : ${companies}" class="card shadow-sm border-0 mb-3 clickable-row" style="border-radius: 16px;" th:data-href="@{/companies/{id}(id=${company.id()})}">
                 <div class="card-body p-3">
-                    <strong class="fs-5 text-dark d-block text-truncate mb-3" th:text="${company.name()}"></strong>
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <strong class="fs-5 text-dark d-block text-truncate pe-2" th:text="${company.name()}"></strong>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle text-nowrap mt-1" th:text="${company.role().getUkrainianName()}"></span>
+                    </div>
 
                     <div class="bg-light p-2 rounded mb-3 small">
                         <div class="text-muted text-truncate mb-2">

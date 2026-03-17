@@ -21,7 +21,10 @@
 
                 <div class="card-body p-4 p-md-5">
 
-                    <h2 class="fw-bold mb-4 text-dark" th:text="${company.name()}"></h2>
+                    <div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+                        <h2 class="fw-bold mb-0 text-dark" th:text="${company.name()}"></h2>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fs-6" th:text="${company.role().getUkrainianName()}"></span>
+                    </div>
 
                     <div class="bg-white border rounded p-3 p-md-4 shadow-sm mb-4">
                         <div class="row gy-3 align-items-center">
@@ -49,8 +52,6 @@
                         <h6 class="fw-bold text-muted border-bottom pb-2 mb-3"><i class="bi bi-journal-text me-1"></i> Нотатки</h6>
                         <p class="mb-0 text-dark" style="white-space: pre-wrap; word-wrap: break-word;" th:text="${company.notes() != null and !company.notes().isEmpty() ? company.notes() : 'Нотатки відсутні.'}"></p>
                     </div>
-
-                    <div class="card shadow-sm border-0 mb-4 bg-light">
 
                         <div class="card shadow-sm border-0 mb-4 bg-light">
                             <div class="card-header bg-dark text-white fw-bold py-3 d-flex justify-content-between align-items-center">

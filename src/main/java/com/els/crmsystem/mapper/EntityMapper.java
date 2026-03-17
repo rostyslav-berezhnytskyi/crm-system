@@ -177,6 +177,7 @@ public class EntityMapper {
         return new CompanyOutputDto(
                 company.getId(),
                 company.getName(),
+                company.getRole(),
                 company.getWebsite(),
                 company.getMainPhone(),
                 company.getEmail(),

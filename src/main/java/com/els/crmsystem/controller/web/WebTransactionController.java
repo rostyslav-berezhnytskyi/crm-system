@@ -56,7 +56,7 @@ public class WebTransactionController {
         );
 
         model.addAttribute("transaction", dto);
-        prepareDropdownData(model);
+        prepareDealerDropdownData(model);
 
         return "transaction/transaction-form";
     }
@@ -70,7 +70,7 @@ public class WebTransactionController {
 
         // If validation fails (e.g., negative amount), reload the page with errors
         if (bindingResult.hasErrors()) {
-            prepareDropdownData(model); // Must reload dropdowns or the page crashes!
+            prepareDealerDropdownData(model); // Must reload dropdowns or the page crashes!
             return "transaction-form";
         }
 
@@ -83,7 +83,7 @@ public class WebTransactionController {
 
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
-            prepareDropdownData(model);
+            prepareDealerDropdownData(model);
             return "transaction-form";
         }
     }
@@ -112,7 +112,7 @@ public class WebTransactionController {
         model.addAttribute("currentReceipt", t.getReceiptUrl());
         model.addAttribute("currentItemImage", t.getItemImageUrl());
 
-        prepareDropdownData(model);
+        prepareDealerDropdownData(model);
 
         return "transaction/transaction-form";
     }
@@ -127,7 +127,7 @@ public class WebTransactionController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("transactionId", id);
-            prepareDropdownData(model);
+            prepareDealerDropdownData(model);
             return "transaction/transaction-form";
         }
 
@@ -136,13 +136,14 @@ public class WebTransactionController {
     }
 
     // --- HELPER: Loads Dropdown Data ---
-    private void prepareDropdownData(Model model) {
+    private void prepareDealerDropdownData(Model model) {
         model.addAttribute("projects", projectService.getAllActiveProjects());
 
-        // ADD THESE TWO LINES FOR THE OPTGROUPS:
-        model.addAttribute("companies", companyService.getAllActiveCompanies());
-        // FILTER: Only pass contacts who have the DEALER (or SELLER) role!
-        // Make sure to match the exact Enum name you are using in your code.
+        // Filter. Only show contacts and companies that has role DEALER.
+        model.addAttribute("companies", companyService.getAllActiveCompanies().stream()
+                .filter(c -> c.role() == com.els.crmsystem.enums.CompanyRole.DEALER)
+                .toList());
+
         model.addAttribute("contacts", contactService.getAllActiveContacts().stream()
                 .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.DEALER)
                 .toList());

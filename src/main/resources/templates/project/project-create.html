@@ -48,21 +48,21 @@
                                 <label class="fw-bold text-muted small form-label">Клієнт (ОСББ, Власник)</label>
                                 <select th:field="*{clientId}" class="form-select">
                                     <option value="">-- Оберіть клієнта --</option>
-                                    <option th:each="contact : ${contacts}" th:value="${contact.id()}" th:text="${contact.name()}"></option>
+                                    <option th:each="contact : ${clientContacts}" th:value="${contact.id()}" th:text="${contact.name()}"></option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="fw-bold text-muted small form-label">Головний монтажник</label>
                                 <select th:field="*{installerId}" class="form-select">
                                     <option value="">-- Оберіть монтажника --</option>
-                                    <option th:each="contact : ${contacts}" th:value="${contact.id()}" th:text="${contact.name()}"></option>
+                                    <option th:each="contact : ${installerContacts}" th:value="${contact.id()}" th:text="${contact.name()}"></option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="fw-bold text-muted small form-label">Постачальник (Де купили?)</label>
                                 <select th:field="*{equipmentDealerId}" class="form-select">
                                     <option value="">-- Оберіть компанію --</option>
-                                    <option th:each="company : ${companies}" th:value="${company.id()}" th:text="${company.name()}"></option>
+                                    <option th:each="company : ${dealerCompanies}" th:value="${company.id()}" th:text="${company.name()}"></option>
                                 </select>
                             </div>
                         </div>
