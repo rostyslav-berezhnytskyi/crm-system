@@ -4,6 +4,7 @@ import com.els.crmsystem.dto.input.CompanyInputDto;
 import com.els.crmsystem.enums.CompanyRole;
 import com.els.crmsystem.service.CompanyDocumentService;
 import com.els.crmsystem.service.CompanyService;
+import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -19,6 +20,7 @@ public class CompanyController {
 
     private final CompanyService companyService;
     private final CompanyDocumentService documentService;
+    private final TransactionService transactionService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -44,9 +46,8 @@ public class CompanyController {
     @GetMapping("/{id}")
     public String viewCompany(@PathVariable Long id, Model model) {
         model.addAttribute("company", companyService.getCompanyById(id));
-
-        // Pass the documents to the HTML!
         model.addAttribute("documents", documentService.getDocumentsForCompany(id));
+        model.addAttribute("transactions", transactionService.getTransactionsByCompanyId(id));
 
         return "companies/view"; // (Or whatever your path is to company-view.html)
     }

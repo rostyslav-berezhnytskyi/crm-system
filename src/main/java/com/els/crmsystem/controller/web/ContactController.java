@@ -5,6 +5,7 @@ import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.enums.ContactRole;
 import com.els.crmsystem.service.CompanyService;
 import com.els.crmsystem.service.ContactService;
+import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,7 @@ public class ContactController {
 
     private final ContactService contactService;
     private final CompanyService companyService;
+    private final TransactionService transactionService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -63,6 +65,7 @@ public class ContactController {
     @GetMapping("/{id}")
     public String viewContact(@PathVariable Long id, Model model) {
         model.addAttribute("contact", contactService.getContactById(id));
+        model.addAttribute("transactions", transactionService.getTransactionsByContactId(id));
         return "contacts/view";
     }
 

@@ -48,6 +48,56 @@
                         </div>
                     </div>
 
+                    <div th:if="${not #lists.isEmpty(transactions)}" class="card shadow-sm border-0 mb-4 bg-light">
+                        <div class="card shadow-sm border-0 mb-4 bg-light">
+                            <div class="card-header bg-dark text-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                                <span>💰 Історія транзакцій</span>
+                            </div>
+                            <div class="card-body p-0 table-responsive">
+                                <table class="table table-hover table-sm mb-0 align-middle bg-white">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3 py-2" style="width: 15%;">Дата</th>
+                                        <th class="py-2" style="width: 25%;">Проєкт</th>
+                                        <th class="py-2">Опис</th>
+                                        <th class="text-end py-2" style="width: 15%;">Сума</th>
+                                        <th class="text-center pe-3 py-2" style="width: 110px;">Дії</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="txn : ${transactions}">
+                                        <td class="text-muted small ps-3">
+                                            <div th:text="${#temporals.format(txn.date(), 'dd-MM-yy')}"></div>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle" style="font-size: 0.65rem;" th:text="${txn.paymentMethod().getUkrainianName()}"></span>
+                                        </td>
+                                        <td class="text-truncate">
+                                            <strong class="text-dark small" th:text="${txn.projectName()}"></strong><br>
+                                            <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle" style="font-size: 0.65rem;" th:text="${txn.category().getUkrainianName()}"></span>
+                                        </td>
+                                        <td>
+                                            <div class="text-muted small" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" th:title="${txn.description()}" th:text="${txn.description()}"></div>
+                                        </td>
+                                        <td class="text-end fw-bold text-nowrap" th:classappend="${txn.type().name() == 'INCOME'} ? 'text-success' : 'text-danger'">
+                                            <span th:text="${txn.type().name() == 'EXPENSE'} ? '-' : '+'"></span>
+                                            <span th:text="${txn.amount()}"></span> ₴
+                                        </td>
+                                        <td class="text-center pe-3">
+                                            <div class="btn-group">
+                                                <a th:if="${txn.receiptUrl() != null}" th:href="@{'/uploads/' + ${txn.receiptUrl()}}" target="_blank" class="btn btn-sm btn-outline-secondary border-0" title="Чек"><i class="bi bi-receipt"></i></a>
+                                                <a th:if="${txn.itemImageUrl() != null}" th:href="@{'/uploads/' + ${txn.itemImageUrl()}}" target="_blank" class="btn btn-sm btn-outline-info border-0" title="Фото"><i class="bi bi-camera"></i></a>
+                                                <a th:href="@{/transactions/edit/{id}(id=${txn.id()})}" class="btn btn-sm btn-outline-warning border-0" title="Редагувати / Деталі"><i class="bi bi-pencil-square"></i></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(transactions)}">
+                                        <td colspan="5" class="text-center text-muted py-4 bg-light">Немає фінансових записів з цим контрагентом.</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="p-3 p-md-4 bg-light rounded border mb-5">
                         <h6 class="fw-bold text-muted border-bottom pb-2 mb-3"><i class="bi bi-journal-text me-1"></i> Нотатки</h6>
                         <p class="mb-0 text-dark" style="white-space: pre-wrap; word-wrap: break-word;" th:text="${contact.notes() != null and !contact.notes().isEmpty() ? contact.notes() : 'Нотатки відсутні.'}"></p>

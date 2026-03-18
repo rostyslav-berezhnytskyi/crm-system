@@ -209,4 +209,18 @@ public class TransactionService {
         // Magically map the Page of Entities to a Page of DTOs!
         return transactionPage.map(mapper::toOutputDto);
     }
+
+    @Transactional(readOnly = true)
+    public List<TransactionOutputDto> getTransactionsByCompanyId(Long companyId) {
+        return transactionRepository.findBySellerCompanyIdOrderByDateDesc(companyId).stream()
+                .map(mapper::toOutputDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionOutputDto> getTransactionsByContactId(Long contactId) {
+        return transactionRepository.findBySellerContactIdOrderByDateDesc(contactId).stream()
+                .map(mapper::toOutputDto)
+                .toList();
+    }
 }

@@ -15,4 +15,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByProjectId(Long projectId);
 
     Page<Transaction> findAllByOrderByDateDesc(Pageable pageable);
+
+    // Find all transactions where this company is the seller, sorted newest first
+    List<Transaction> findBySellerCompanyIdOrderByDateDesc(Long companyId);
+
+    // Find all transactions where this contact is the seller, sorted newest first
+    List<Transaction> findBySellerContactIdOrderByDateDesc(Long contactId);
 }
