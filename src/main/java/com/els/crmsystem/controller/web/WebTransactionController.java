@@ -141,11 +141,14 @@ public class WebTransactionController {
 
         // Filter. Only show contacts and companies that has role DEALER.
         model.addAttribute("companies", companyService.getAllActiveCompanies().stream()
-                .filter(c -> c.role() == com.els.crmsystem.enums.CompanyRole.DEALER)
+                .filter(c -> c.role() == com.els.crmsystem.enums.CompanyRole.DEALER ||
+                        c.role() == com.els.crmsystem.enums.CompanyRole.SUBCONTRACTOR)
                 .toList());
 
         model.addAttribute("contacts", contactService.getAllActiveContacts().stream()
-                .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.DEALER)
+                .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.DEALER ||
+                        c.role() == com.els.crmsystem.enums.ContactRole.INSTALLER ||
+                        c.role() == com.els.crmsystem.enums.ContactRole.MANAGER)
                 .toList());
 
         model.addAttribute("types", TransactionType.values());

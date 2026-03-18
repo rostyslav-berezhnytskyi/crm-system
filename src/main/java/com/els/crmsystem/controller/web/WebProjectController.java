@@ -23,6 +23,7 @@ public class WebProjectController {
     private final ProjectMediaService mediaService;
     private final EquipmentService equipmentService;
     private final TransactionService transactionService;
+    private final FinanceService financeService;
 
     private void populateDropdowns(Model model) {
 
@@ -49,8 +50,19 @@ public class WebProjectController {
         model.addAttribute("project", projectService.getProjectById(id));
         model.addAttribute("gallery", mediaService.getGalleryForProject(id));
 
-        // CRITICAL FIX: Pass the transactions and equipment to the HTML!
-        model.addAttribute("transactions", transactionService.getTransactionsByProjectId(id));
+        var transactions = transactionService.getTransactionsByProjectId(id);
+        model.addAttribute("transactions", transactions);
+
+        double balance = financeService.calculateTotalBalance(transactions);
+        double totalIncome = financeService.calculateTotalIncome(transactions);
+        double totalExpense = financeService.calculateTotalExpense(transactions);
+
+        model.addAttribute("projectBalance", balance);
+        model.addAttribute("projectIncome", totalIncome);
+        model.addAttribute("projectExpense", totalExpense);
+
+        model.addAttribute("expenseBreakdown", financeService.getExpenseBreakdownByCategory(transactions));
+
         model.addAttribute("equipments", equipmentService.getEquipmentForProject(id));
 
         // Pass all active contacts so we can show them in the "Add Contact" dropdown
