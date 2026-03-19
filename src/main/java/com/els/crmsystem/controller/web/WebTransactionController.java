@@ -56,7 +56,7 @@ public class WebTransactionController {
         );
 
         model.addAttribute("transaction", dto);
-        prepareDealerDropdownData(model);
+        prepareDropdownData(model);
 
         return "transaction/transaction-form";
     }
@@ -70,7 +70,7 @@ public class WebTransactionController {
 
         // If validation fails (e.g., negative amount), reload the page with errors
         if (bindingResult.hasErrors()) {
-            prepareDealerDropdownData(model); // Must reload dropdowns or the page crashes!
+            prepareDropdownData(model); // Must reload dropdowns or the page crashes!
             return "transaction-form";
         }
 
@@ -83,7 +83,7 @@ public class WebTransactionController {
 
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
-            prepareDealerDropdownData(model);
+            prepareDropdownData(model);
             return "transaction-form";
         }
     }
@@ -112,7 +112,7 @@ public class WebTransactionController {
         model.addAttribute("currentReceipt", t.getReceiptUrl());
         model.addAttribute("currentItemImage", t.getItemImageUrl());
 
-        prepareDealerDropdownData(model);
+        prepareDropdownData(model);
 
         return "transaction/transaction-form";
     }
@@ -127,7 +127,7 @@ public class WebTransactionController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("transactionId", id);
-            prepareDealerDropdownData(model);
+            prepareDropdownData(model);
             return "transaction/transaction-form";
         }
 
@@ -136,25 +136,32 @@ public class WebTransactionController {
     }
 
     // --- HELPER: Loads Dropdown Data ---
-    private void prepareDealerDropdownData(Model model) {
+    private void prepareDropdownData(Model model) {
         model.addAttribute("projects", projectService.getAllActiveProjects());
+        model.addAttribute("types", TransactionType.values());
+        model.addAttribute("paymentMethods", PaymentMethod.values());
 
-        // Filter. Only show contacts and companies that has role DEALER.
-        model.addAttribute("companies", companyService.getAllActiveCompanies().stream()
+        // 1. SPLIT CATEGORIES
+        model.addAttribute("incomeCategories", java.util.Arrays.stream(TransactionCategory.values())
+                .filter(c -> c.getType() == TransactionType.INCOME).toList());
+        model.addAttribute("expenseCategories", java.util.Arrays.stream(TransactionCategory.values())
+                .filter(c -> c.getType() == TransactionType.EXPENSE).toList());
+
+        // 2. INCOME COUNTERPARTIES (Only Clients)
+        model.addAttribute("incomeCompanies", companyService.getAllActiveCompanies().stream()
+                .filter(c -> c.role() == com.els.crmsystem.enums.CompanyRole.CLIENT).toList());
+        model.addAttribute("incomeContacts", contactService.getAllActiveContacts().stream()
+                .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.CLIENT).toList());
+
+        // 3. EXPENSE COUNTERPARTIES (Dealers, Installers, Managers)
+        model.addAttribute("expenseCompanies", companyService.getAllActiveCompanies().stream()
                 .filter(c -> c.role() == com.els.crmsystem.enums.CompanyRole.DEALER ||
-                        c.role() == com.els.crmsystem.enums.CompanyRole.SUBCONTRACTOR)
-                .toList());
-
-        model.addAttribute("contacts", contactService.getAllActiveContacts().stream()
+                        c.role() == com.els.crmsystem.enums.CompanyRole.SUBCONTRACTOR).toList());
+        model.addAttribute("expenseContacts", contactService.getAllActiveContacts().stream()
                 .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.DEALER ||
                         c.role() == com.els.crmsystem.enums.ContactRole.INSTALLER ||
                         (c.role() == com.els.crmsystem.enums.ContactRole.MANAGER &&
                                 c.companyName() != null &&
-                                c.companyName().toUpperCase().contains("ELS")))
-                .toList());
-
-        model.addAttribute("types", TransactionType.values());
-        model.addAttribute("categories", TransactionCategory.values());
-        model.addAttribute("paymentMethods", PaymentMethod.values());
+                                c.companyName().toUpperCase().contains("ELS"))).toList());
     }
 }
