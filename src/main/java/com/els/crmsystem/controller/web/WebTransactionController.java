@@ -148,7 +148,9 @@ public class WebTransactionController {
         model.addAttribute("contacts", contactService.getAllActiveContacts().stream()
                 .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.DEALER ||
                         c.role() == com.els.crmsystem.enums.ContactRole.INSTALLER ||
-                        c.role() == com.els.crmsystem.enums.ContactRole.MANAGER)
+                        (c.role() == com.els.crmsystem.enums.ContactRole.MANAGER &&
+                                c.companyName() != null &&
+                                c.companyName().toUpperCase().contains("ELS")))
                 .toList());
 
         model.addAttribute("types", TransactionType.values());

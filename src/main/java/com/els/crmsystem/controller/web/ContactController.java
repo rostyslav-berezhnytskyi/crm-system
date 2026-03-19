@@ -5,6 +5,7 @@ import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.enums.ContactRole;
 import com.els.crmsystem.service.CompanyService;
 import com.els.crmsystem.service.ContactService;
+import com.els.crmsystem.service.FinanceService;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class ContactController {
     private final ContactService contactService;
     private final CompanyService companyService;
     private final TransactionService transactionService;
+    private final FinanceService financeService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -65,7 +67,17 @@ public class ContactController {
     @GetMapping("/{id}")
     public String viewContact(@PathVariable Long id, Model model) {
         model.addAttribute("contact", contactService.getContactById(id));
+
+        var transactions = transactionService.getTransactionsByContactId(id);
         model.addAttribute("transactions", transactionService.getTransactionsByContactId(id));
+
+        if (!transactions.isEmpty()) {
+            model.addAttribute("totalBalance", financeService.calculateTotalBalance(transactions));
+            model.addAttribute("totalIncome", financeService.calculateTotalIncome(transactions));
+            model.addAttribute("totalExpense", financeService.calculateTotalExpense(transactions));
+            model.addAttribute("expenseBreakdown", financeService.getExpenseBreakdownByCategory(transactions));
+        }
+
         return "contacts/view";
     }
 
