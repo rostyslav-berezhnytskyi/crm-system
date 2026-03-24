@@ -39,24 +39,38 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
 
                         // 2. GOD MODE (Users)
-                        .requestMatchers("/register", "/users/**").hasRole("ADMIN")
+                        .requestMatchers("/register", "/users", "/users/**").hasRole("ADMIN")
 
                         // 3. MONEY & CRM ZONE (Transactions, Contacts, Companies)
-                        .requestMatchers("/transactions/**", "/contacts/**", "/companies/**")
-                        .hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
+                        .requestMatchers(
+                                "/transactions", "/transactions/**",
+                                "/contacts", "/contacts/**",
+                                "/companies", "/companies/**"
+                        ).hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
 
                         // 4. PROJECT MANAGEMENT (Create, Edit, Delete)
-                        .requestMatchers("/projects/new", "/projects/edit/**", "/projects/update/**", "/projects/delete/**")
-                        .hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
-
+                        .requestMatchers(
+                                "/projects/new",
+                                "/projects/edit/**",
+                                "/projects/update/**",
+                                "/projects/delete/**",
+                                "/projects/*/equipment",           // Add equipment
+                                "/projects/equipment/*/delete",    // Delete equipment
+                                "/projects/*/contacts/add",        // Add extra contacts
+                                "/projects/*/contacts/*/remove"    // Remove extra contacts
+                        ).hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
                         .requestMatchers("/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER", "GUEST")
 
-                        // 5. OPERATIONAL ZONE (View Projects, Upload Photos)
+                        // 5. VIEWING THE PROJECT LIST
+                        // (Guests/Clients are allowed to see the main list if you want them to)
+                        .requestMatchers("/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER", "GUEST")
+
+                        // 6. OPERATIONAL ZONE (View Projects, Upload Photos)
                         // INSTALLER is allowed here.
                         .requestMatchers("/projects/**", "/uploads/**")
                         .hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER")
 
-                        // 6. CATCH-ALL FOR GUESTS
+                        // 7. CATCH-ALL FOR GUESTS
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
