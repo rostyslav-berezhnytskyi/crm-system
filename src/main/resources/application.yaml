@@ -37,3 +37,12 @@ spring:
 els:
   upload-dir: uploads # create an 'uploads' folder in project root
 
+security:
+  remember-me:
+    key: ${COOKIE_SECRET}
+
+# ADD THIS AT THE VERY BOTTOM:
+server:
+  servlet:
+    session:
+      timeout: 24h

@@ -1,6 +1,7 @@
 package com.els.crmsystem.config;
 
 import com.els.crmsystem.security.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +18,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    @Value("${security.remember-me.key}")
+    private String rememberMeKey;
 
     private final CustomUserDetailsService userDetailsService;
 
@@ -60,9 +64,17 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/projects", true)
                         .permitAll()
                 )
+                // --- REMEMBER ME CONFIGURATION ---
+                .rememberMe(remember -> remember
+                        .key(rememberMeKey)
+                        .tokenValiditySeconds(86400) // 1 day
+                        .userDetailsService(userDetailsService)
+                        .alwaysRemember(true)
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
+                        .deleteCookies("remember-me")
                         .permitAll()
                 );
 
