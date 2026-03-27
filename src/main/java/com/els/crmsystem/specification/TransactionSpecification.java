@@ -21,7 +21,8 @@ public class TransactionSpecification {
             LocalDateTime startDate,
             LocalDateTime endDate,
             Long companyId,
-            Long contactId) {
+            Long contactId,
+            String description) {
 
         return (root, query, criteriaBuilder) -> {
             // This list holds our "Lego bricks"
@@ -63,6 +64,10 @@ public class TransactionSpecification {
             if (contactId != null)
                 predicates.add(criteriaBuilder.equal(root.get("sellerContact").get("id"), contactId));
 
+            // Search by description (case-insensitive partial match)
+            if (description != null && !description.isBlank()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), "%" + description.toLowerCase() + "%"));
+            }
             // Combine all the bricks with an "AND" statement
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

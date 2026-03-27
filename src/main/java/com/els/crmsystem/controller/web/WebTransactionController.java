@@ -44,6 +44,7 @@ public class WebTransactionController {
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(pattern = "yyyy-MM-dd") java.time.LocalDate endDate,
             @RequestParam(required = false) TransactionCategory category,
             @RequestParam(required = false) String sellerValue,
+            @RequestParam(required = false) String description,
             Model model) {
 
         // --- NEW: Parse the Seller Value ---
@@ -60,7 +61,7 @@ public class WebTransactionController {
 
         // --- NEW: Grab the full unpaginated list and let FinanceService do the math! ---
         List<TransactionOutputDto> allFiltered = transactionService.getAllFilteredTransactions(
-                projectId, type, category, null, startDateTime, endDateTime, companyId, contactId);
+                projectId, type, category, null, startDateTime, endDateTime, companyId, contactId, description);
 
         model.addAttribute("totalIncome", financeService.calculateTotalIncome(allFiltered));
         model.addAttribute("totalExpense", financeService.calculateTotalExpense(allFiltered));
@@ -69,7 +70,7 @@ public class WebTransactionController {
 
         // 2. Ask the Service for the Filtered & Sorted Page
         Page<TransactionOutputDto> transactionPage = transactionService.getFilteredAndSortedTransactions(
-                projectId, type, category, null, startDateTime, endDateTime, companyId, contactId, page, size, sortField, sortDir);
+                projectId, type, category, null, startDateTime, endDateTime, companyId, contactId, page, size, sortField, sortDir, description);
 
         // 3. Send the Data and Pagination to HTML
         model.addAttribute("transactions", transactionPage.getContent());
@@ -85,6 +86,7 @@ public class WebTransactionController {
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("currentCategory", category); // Remember category
         model.addAttribute("currentSellerValue", sellerValue); // Remember seller
+        model.addAttribute("currentDescription", description);
 
         // 5. Load the options for the dropdowns
         prepareDropdownData(model);

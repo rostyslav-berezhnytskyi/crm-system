@@ -247,7 +247,8 @@ public class TransactionService {
             int page,
             int size,
             String sortField,
-            String sortDir) {
+            String sortDir,
+            String description) {
 
         // 1. Setup Sorting (e.g., sortField="amount", sortDir="desc")
         Sort sort = sortDir.equalsIgnoreCase("asc")
@@ -259,7 +260,7 @@ public class TransactionService {
 
         // 3. Build the dynamic SQL Lego blocks
         Specification<Transaction> spec = TransactionSpecification.filterBy(
-                projectId, type, category, paymentMethod, startDate, endDate, companyId, contactId); // PASSED HERE
+                projectId, type, category, paymentMethod, startDate, endDate, companyId, contactId, description); // PASSED HERE
 
         // 4. Execute the query!
         Page<Transaction> transactionPage = transactionRepository.findAll(spec, pageable);
@@ -272,10 +273,10 @@ public class TransactionService {
     public List<TransactionOutputDto> getAllFilteredTransactions(
             Long projectId, TransactionType type, TransactionCategory category,
             PaymentMethod paymentMethod, LocalDateTime startDate, LocalDateTime endDate,
-            Long companyId, Long contactId) {
+            Long companyId, Long contactId, String description) {
 
         Specification<Transaction> spec = TransactionSpecification.filterBy(
-                projectId, type, category, paymentMethod, startDate, endDate, companyId, contactId);
+                projectId, type, category, paymentMethod, startDate, endDate, companyId, contactId, description);
 
         return transactionRepository.findAll(spec).stream()
                 .map(mapper::toOutputDto)
