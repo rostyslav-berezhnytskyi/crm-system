@@ -5,18 +5,25 @@ import com.els.crmsystem.dto.output.TransactionOutputDto;
 import com.els.crmsystem.entity.Project;
 import com.els.crmsystem.entity.Transaction;
 import com.els.crmsystem.entity.User;
+import com.els.crmsystem.enums.PaymentMethod;
+import com.els.crmsystem.enums.TransactionCategory;
+import com.els.crmsystem.enums.TransactionType;
 import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.*;
+import com.els.crmsystem.specification.TransactionSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -222,5 +229,56 @@ public class TransactionService {
         return transactionRepository.findBySellerContactIdOrderByDateDesc(contactId).stream()
                 .map(mapper::toOutputDto)
                 .toList();
+    }
+
+    //SPECIFICATION
+
+    // You will need to import Sort and Pageable
+
+    public Page<TransactionOutputDto> getFilteredAndSortedTransactions(
+            Long projectId,
+            TransactionType type,
+            TransactionCategory category,
+            PaymentMethod paymentMethod,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Long companyId,
+            Long contactId,
+            int page,
+            int size,
+            String sortField,
+            String sortDir) {
+
+        // 1. Setup Sorting (e.g., sortField="amount", sortDir="desc")
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortField).ascending()
+                : Sort.by(sortField).descending();
+
+        // 2. Attach sorting and pagination together
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // 3. Build the dynamic SQL Lego blocks
+        Specification<Transaction> spec = TransactionSpecification.filterBy(
+                projectId, type, category, paymentMethod, startDate, endDate, companyId, contactId); // PASSED HERE
+
+        // 4. Execute the query!
+        Page<Transaction> transactionPage = transactionRepository.findAll(spec, pageable);
+
+        // 5. Convert to DTOs
+        return transactionPage.map(mapper::toOutputDto);
+    }
+
+    // 🗄️ Fetches ALL matching records (unpaginated) for the FinanceService to calculate
+    public List<TransactionOutputDto> getAllFilteredTransactions(
+            Long projectId, TransactionType type, TransactionCategory category,
+            PaymentMethod paymentMethod, LocalDateTime startDate, LocalDateTime endDate,
+            Long companyId, Long contactId) {
+
+        Specification<Transaction> spec = TransactionSpecification.filterBy(
+                projectId, type, category, paymentMethod, startDate, endDate, companyId, contactId);
+
+        return transactionRepository.findAll(spec).stream()
+                .map(mapper::toOutputDto)
+                .collect(Collectors.toList());
     }
 }

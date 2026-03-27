@@ -4,10 +4,11 @@ import com.els.crmsystem.entity.Transaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
-import java.util.List;
-import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+import java.util.List;
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
 
     // Efficient SQL check: "SELECT count(*) > 0 FROM transactions WHERE project_id = ?"
     boolean existsByProjectId(Long projectId);

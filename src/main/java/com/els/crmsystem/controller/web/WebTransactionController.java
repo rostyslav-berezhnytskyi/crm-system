@@ -6,10 +6,7 @@ import com.els.crmsystem.enums.PaymentMethod;
 import com.els.crmsystem.enums.TransactionCategory;
 import com.els.crmsystem.enums.TransactionType;
 import com.els.crmsystem.mapper.EntityMapper;
-import com.els.crmsystem.service.CompanyService;
-import com.els.crmsystem.service.ContactService;
-import com.els.crmsystem.service.ProjectService;
-import com.els.crmsystem.service.TransactionService;
+import com.els.crmsystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,6 +16,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,20 +28,66 @@ public class WebTransactionController {
     private final EntityMapper mapper;
     private final CompanyService companyService;
     private final ContactService contactService;
+    private final FinanceService financeService;
 
-    // --- 1. LIST PAGE (WITH PAGINATION & SORTING) ---
+    // --- 1. LIST PAGE (WITH PAGINATION, FILTERING & SORTING) ---
     @GetMapping("/transactions")
     public String listTransactions(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(defaultValue = "date") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) TransactionType type,
+            @RequestParam(required = false) PaymentMethod paymentMethod,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(pattern = "yyyy-MM-dd") java.time.LocalDate startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(pattern = "yyyy-MM-dd") java.time.LocalDate endDate,
+            @RequestParam(required = false) TransactionCategory category,
+            @RequestParam(required = false) String sellerValue,
             Model model) {
 
-        // Ask the Service for Page # (page), with 15 items per page
-        Page<TransactionOutputDto> transactionPage = transactionService.getTransactionsPage(page, 15);
+        // --- NEW: Parse the Seller Value ---
+        Long companyId = null;
+        Long contactId = null;
+        if (sellerValue != null && !sellerValue.isBlank()) {
+            if (sellerValue.startsWith("COMP_")) companyId = Long.parseLong(sellerValue.replace("COMP_", ""));
+            else if (sellerValue.startsWith("CONT_")) contactId = Long.parseLong(sellerValue.replace("CONT_", ""));
+        }
 
-        // Send the DTOs and Pagination data to the HTML
+        // 1. Convert simple LocalDate from HTML into precise LocalDateTime for the Database
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(23, 59, 59) : null;
+
+        // --- NEW: Grab the full unpaginated list and let FinanceService do the math! ---
+        List<TransactionOutputDto> allFiltered = transactionService.getAllFilteredTransactions(
+                projectId, type, category, null, startDateTime, endDateTime, companyId, contactId);
+
+        model.addAttribute("totalIncome", financeService.calculateTotalIncome(allFiltered));
+        model.addAttribute("totalExpense", financeService.calculateTotalExpense(allFiltered));
+        model.addAttribute("totalBalance", financeService.calculateTotalBalance(allFiltered));
+        // -------------------------------------------------------------------------------
+
+        // 2. Ask the Service for the Filtered & Sorted Page
+        Page<TransactionOutputDto> transactionPage = transactionService.getFilteredAndSortedTransactions(
+                projectId, type, category, null, startDateTime, endDateTime, companyId, contactId, page, size, sortField, sortDir);
+
+        // 3. Send the Data and Pagination to HTML
         model.addAttribute("transactions", transactionPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", transactionPage.getTotalPages());
+
+        // 4. Send CURRENT filters back to HTML (so the dropdowns remember what you selected!)
+        model.addAttribute("currentProjectId", projectId);
+        model.addAttribute("currentType", type);
+        model.addAttribute("currentStartDate", startDate);
+        model.addAttribute("currentEndDate", endDate);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("currentCategory", category); // Remember category
+        model.addAttribute("currentSellerValue", sellerValue); // Remember seller
+
+        // 5. Load the options for the dropdowns
+        prepareDropdownData(model);
 
         return "transaction/transactions";
     }
@@ -140,6 +185,11 @@ public class WebTransactionController {
         model.addAttribute("projects", projectService.getAllActiveProjects());
         model.addAttribute("types", TransactionType.values());
         model.addAttribute("paymentMethods", PaymentMethod.values());
+
+        // --- NEW: Full lists for the Filter Bar ---
+        model.addAttribute("companies", companyService.getAllActiveCompanies());
+        model.addAttribute("contacts", contactService.getAllActiveContacts());
+        // ----------------------------------------
 
         // 1. SPLIT CATEGORIES
         model.addAttribute("incomeCategories", java.util.Arrays.stream(TransactionCategory.values())

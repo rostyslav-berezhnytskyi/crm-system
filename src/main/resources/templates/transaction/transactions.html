@@ -18,18 +18,128 @@
         </div>
     </div>
 
+    <div class="row g-2 mb-3">
+
+        <div class="col-6 col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-success h-100" style="border-radius: 12px;">
+                <div class="card-body p-2 p-md-3"> <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Загальний дохід</div>
+                    <h5 class="text-success mb-0 fw-bold">+ <span th:text="${#numbers.formatDecimal(totalIncome, 1, 'WHITESPACE', 2, 'POINT')}"></span> ₴</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 border-danger h-100" style="border-radius: 12px;">
+                <div class="card-body p-2 p-md-3">
+                    <div class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Загальні витрати</div>
+                    <h5 class="text-danger mb-0 fw-bold">- <span th:text="${#numbers.formatDecimal(totalExpense, 1, 'WHITESPACE', 2, 'POINT')}"></span> ₴</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm border-0 border-start border-4 h-100" style="border-radius: 12px;" th:classappend="${totalBalance >= 0 ? 'border-success' : 'border-danger'}">
+                <div class="card-body p-2 p-md-3 d-flex justify-content-between align-items-center d-md-block">
+                    <div class="text-muted fw-bold text-uppercase mb-md-1" style="font-size: 0.65rem;">Чистий баланс</div>
+                    <h4 class="mb-0 fw-bold" th:classappend="${totalBalance >= 0 ? 'text-success' : 'text-danger'}">
+                        <span th:text="${totalBalance > 0 ? '+' : ''}"></span><span th:text="${#numbers.formatDecimal(totalBalance, 1, 'WHITESPACE', 2, 'POINT')}"></span> ₴
+                    </h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-white" style="border-radius: 12px;">
+        <div class="card-body p-3">
+            <form method="get" action="/transactions" class="row g-2 align-items-end">
+
+                <input type="hidden" name="sortField" th:value="${sortField}">
+                <input type="hidden" name="sortDir" th:value="${sortDir}">
+
+                <div class="col-12 col-md-3">
+                    <label class="form-label text-muted small fw-bold mb-1">Проєкт</label>
+                    <select name="projectId" class="form-select form-select-sm">
+                        <option value="">Всі проєкти</option>
+                        <option th:each="p : ${projects}" th:value="${p.id}" th:text="${p.name}" th:selected="${p.id == currentProjectId}"></option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-muted small fw-bold mb-1">Тип</label>
+                    <select name="type" class="form-select form-select-sm" id="filterTypeSelect">
+                        <option value="">Всі типи</option>
+                        <option th:each="t : ${types}" th:value="${t}" th:text="${t.name() == 'INCOME' ? '🟢 Дохід' : '🔴 Витрата'}" th:selected="${t == currentType}"></option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-muted small fw-bold mb-1">Категорія</label>
+                    <select name="category" class="form-select form-select-sm" id="filterCategorySelect">
+                        <option value="">Всі категорії</option>
+                        <option th:each="c : ${incomeCategories}" th:value="${c}" th:text="${c.ukrainianName}" class="opt-income" th:selected="${currentCategory != null and c.name() == currentCategory.name()}"></option>
+                        <option th:each="c : ${expenseCategories}" th:value="${c}" th:text="${c.ukrainianName}" class="opt-expense" th:selected="${currentCategory != null and c.name() == currentCategory.name()}"></option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label class="form-label text-muted small fw-bold mb-1">Контрагент</label>
+                    <select name="sellerValue" class="form-select form-select-sm" id="filterCounterpartySelect">
+                        <option value="">Всі контрагенти</option>
+                        <optgroup label="🏢 Компанії (Клієнти)" class="opt-income">
+                            <option th:each="c : ${incomeCompanies}" th:value="'COMP_' + ${c.id()}" th:text="${c.name()}" th:selected="${'COMP_' + c.id() == currentSellerValue}"></option>
+                        </optgroup>
+                        <optgroup label="👤 Особи (Клієнти)" class="opt-income">
+                            <option th:each="c : ${incomeContacts}" th:value="'CONT_' + ${c.id()}" th:text="${c.name()}" th:selected="${'CONT_' + c.id() == currentSellerValue}"></option>
+                        </optgroup>
+                        <optgroup label="🏢 Компанії (Постачальники/Підрядники)" class="opt-expense">
+                            <option th:each="c : ${expenseCompanies}" th:value="'COMP_' + ${c.id()}" th:text="${c.name()}" th:selected="${'COMP_' + c.id() == currentSellerValue}"></option>
+                        </optgroup>
+                        <optgroup label="👤 Особи (Монтажники/Співробітники)" class="opt-expense">
+                            <option th:each="c : ${expenseContacts}" th:value="'CONT_' + ${c.id()}" th:text="${c.name()}" th:selected="${'CONT_' + c.id() == currentSellerValue}"></option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-muted small fw-bold mb-1">Від дати</label>
+                    <input type="date" name="startDate" class="form-control form-control-sm" th:value="${currentStartDate}">
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-muted small fw-bold mb-1">До дати</label>
+                    <input type="date" name="endDate" class="form-control form-control-sm" th:value="${currentEndDate}">
+                </div>
+
+                <div class="col-12 col-md-3 d-flex gap-2 mt-3 mt-md-auto">
+                    <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold py-2 py-md-1"><i class="bi bi-search me-1"></i> Фільтр</button>
+                    <a href="/transactions" class="btn btn-sm btn-outline-secondary w-100 py-2 py-md-1">Скинути</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card shadow-sm border-0 d-none d-lg-block mb-4">
         <div class="card-body p-0">
             <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
                 <thead class="table-light">
                 <tr>
-                    <th style="width: 100px;">Дата</th>
+                    <th style="width: 100px;">
+                        <a class="text-dark text-decoration-none d-flex align-items-center"
+                           th:href="@{/transactions(sortField='date', sortDir=${sortField == 'date' and sortDir == 'desc' ? 'asc' : 'desc'}, projectId=${currentProjectId}, type=${currentType}, startDate=${currentStartDate}, endDate=${currentEndDate})}">
+                            Дата <i class="bi ms-1" th:classappend="${sortField == 'date'} ? (${sortDir == 'desc'} ? 'bi-sort-down' : 'bi-sort-up') : 'bi-arrow-down-up text-muted opacity-25'"></i>
+                        </a>
+                    </th>
                     <th style="width: 15%;">Проєкт</th>
-                    <th style="width: 15%;">Постачальник</th>
+                    <th style="width: 15%;">Контрагент</th>
                     <th>Опис</th>
                     <th style="width: 12%;">Категорія</th>
                     <th style="width: 100px;" class="text-center">Тип</th>
-                    <th style="width: 130px;" class="text-end pe-3">Сума</th>
+                    <th style="width: 130px;" class="text-end pe-3">
+                        <a class="text-dark text-decoration-none d-flex align-items-center justify-content-end"
+                           th:href="@{/transactions(sortField='amount', sortDir=${sortField == 'amount' and sortDir == 'desc' ? 'asc' : 'desc'}, projectId=${currentProjectId}, type=${currentType}, startDate=${currentStartDate}, endDate=${currentEndDate})}">
+                            Сума <i class="bi ms-1" th:classappend="${sortField == 'amount'} ? (${sortDir == 'desc'} ? 'bi-sort-down' : 'bi-sort-up') : 'bi-arrow-down-up text-muted opacity-25'"></i>
+                        </a>
+                    </th>
                     <th style="width: 90px;" class="text-center">Файли</th>
                     <th style="width: 100px;" class="text-center">Дії</th>
                 </tr>
@@ -182,6 +292,60 @@
         var myModal = new bootstrap.Modal(document.getElementById('noteModal'));
         myModal.show();
     }
+
+    // --- NEW: SMART FILTER LOGIC ---
+    document.addEventListener("DOMContentLoaded", function() {
+        const typeSelect = document.getElementById('filterTypeSelect');
+        const categorySelect = document.getElementById('filterCategorySelect');
+        const counterpartySelect = document.getElementById('filterCounterpartySelect');
+
+        if (typeSelect && categorySelect && counterpartySelect) {
+            function toggleFilterFields() {
+                const selectedType = typeSelect.value; // '', 'INCOME', or 'EXPENSE'
+
+                // 1. Filter Categories
+                Array.from(categorySelect.querySelectorAll('option')).forEach(opt => {
+                    if (opt.value === "") return; // Always keep "All Categories"
+                    if (selectedType === "" ||
+                        (selectedType === 'INCOME' && opt.classList.contains('opt-income')) ||
+                        (selectedType === 'EXPENSE' && opt.classList.contains('opt-expense'))) {
+                        opt.style.display = '';
+                        opt.disabled = false;
+                    } else {
+                        opt.style.display = 'none';
+                        opt.disabled = true;
+                    }
+                });
+
+                // 2. Filter Counterparties
+                Array.from(counterpartySelect.querySelectorAll('optgroup')).forEach(group => {
+                    if (selectedType === "" ||
+                        (selectedType === 'INCOME' && group.classList.contains('opt-income')) ||
+                        (selectedType === 'EXPENSE' && group.classList.contains('opt-expense'))) {
+                        group.style.display = '';
+                        group.disabled = false;
+                    } else {
+                        group.style.display = 'none';
+                        group.disabled = true;
+                    }
+                });
+
+                // 3. Reset dropdowns if the currently selected item was just hidden
+                if (categorySelect.options[categorySelect.selectedIndex] && categorySelect.options[categorySelect.selectedIndex].disabled) {
+                    categorySelect.value = '';
+                }
+                if (counterpartySelect.options[counterpartySelect.selectedIndex] && counterpartySelect.options[counterpartySelect.selectedIndex].parentNode.disabled) {
+                    counterpartySelect.value = '';
+                }
+            }
+
+            // Run the filter every time the user changes the Type
+            typeSelect.addEventListener('change', toggleFilterFields);
+
+            // Run it once when the page loads so it remembers the active filter!
+            toggleFilterFields();
+        }
+    });
 </script>
 </body>
 </html>
