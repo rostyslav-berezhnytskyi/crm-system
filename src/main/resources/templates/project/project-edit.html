@@ -52,21 +52,21 @@
                         <div class="row mb-3 gy-3">
                             <div class="col-md-4">
                                 <label class="form-label text-muted small fw-bold">Клієнт</label>
-                                <select name="clientId" class="form-select">
+                                <select name="clientId" class="form-select search-select">
                                     <option value="">-- Відсутній --</option>
                                     <option th:each="contact : ${clientContacts}" th:value="${contact.id()}" th:text="${contact.name()}" th:selected="${project.clientId() == contact.id()}"></option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label text-muted small fw-bold">Монтажник</label>
-                                <select name="installerId" class="form-select">
+                                <select name="installerId" class="form-select search-select">
                                     <option value="">-- Відсутній --</option>
                                     <option th:each="contact : ${installerContacts}" th:value="${contact.id()}" th:text="${contact.name()}" th:selected="${project.installerId() == contact.id()}"></option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label text-muted small fw-bold">Постачальник обладнання</label>
-                                <select name="equipmentDealerId" class="form-select">
+                                <select name="equipmentDealerId" class="form-select search-select">
                                     <option value="">-- Відсутній --</option>
                                     <option th:each="company : ${dealerCompanies}" th:value="${company.id()}" th:text="${company.name()}" th:selected="${project.equipmentDealerId() == company.id()}"></option>
                                 </select>
@@ -154,6 +154,6 @@
     }
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{fragments :: scripts}"></div>
 </body>
 </html>
