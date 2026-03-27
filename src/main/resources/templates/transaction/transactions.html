@@ -11,8 +11,14 @@
 
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
         <h2 class="mb-0 text-center text-sm-start">💰 Транзакції</h2>
-        <div class="w-100 d-flex justify-content-center justify-content-sm-end">
-            <a href="/transactions/new" class="btn btn-primary text-nowrap w-100 w-sm-auto shadow-sm" style="max-width: 420px;">
+        <div class="w-100 d-flex flex-column flex-sm-row justify-content-center justify-content-sm-end gap-2">
+
+            <a th:href="@{/transactions/export(projectId=${currentProjectId}, type=${currentType}, category=${currentCategory}, sellerValue=${currentSellerValue}, startDate=${currentStartDate}, endDate=${currentEndDate}, description=${currentDescription})}"
+               class="btn btn-success text-nowrap shadow-sm w-100 w-sm-auto">
+                <i class="bi bi-file-earmark-excel me-1"></i> Експорт в Excel
+            </a>
+
+            <a href="/transactions/new" class="btn btn-primary text-nowrap shadow-sm w-100 w-sm-auto">
                 <i class="bi bi-plus-lg"></i> Нова транзакція
             </a>
         </div>

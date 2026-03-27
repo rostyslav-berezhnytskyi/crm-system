@@ -10,12 +10,18 @@ import com.els.crmsystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,6 +35,7 @@ public class WebTransactionController {
     private final CompanyService companyService;
     private final ContactService contactService;
     private final FinanceService financeService;
+    private final ExcelExportService excelExportService; // <-- Add this
 
     // --- 1. LIST PAGE (WITH PAGINATION, FILTERING & SORTING) ---
     @GetMapping("/transactions")
@@ -215,5 +222,44 @@ public class WebTransactionController {
                         (c.role() == com.els.crmsystem.enums.ContactRole.MANAGER &&
                                 c.companyName() != null &&
                                 c.companyName().toUpperCase().contains("ELS"))).toList());
+    }
+
+    // --- EXCEL EXPORT ---
+    @GetMapping("/transactions/export")
+    public ResponseEntity<byte[]> exportTransactions(
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) TransactionType type,
+            @RequestParam(required = false) PaymentMethod paymentMethod,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(required = false) TransactionCategory category,
+            @RequestParam(required = false) String sellerValue,
+            @RequestParam(required = false) String description) {
+
+        // 1. Parse Seller Value
+        Long companyId = null;
+        Long contactId = null;
+        if (sellerValue != null && !sellerValue.isBlank()) {
+            if (sellerValue.startsWith("COMP_")) companyId = Long.parseLong(sellerValue.replace("COMP_", ""));
+            else if (sellerValue.startsWith("CONT_")) contactId = Long.parseLong(sellerValue.replace("CONT_", ""));
+        }
+
+        // 2. Parse Dates
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(23, 59, 59) : null;
+
+        // 3. Get the FULL unpaginated list based on filters
+        List<TransactionOutputDto> allFiltered = transactionService.getAllFilteredTransactions(
+                projectId, type, category, paymentMethod, startDateTime, endDateTime, companyId, contactId, description);
+
+        // 4. Generate Excel byte array
+        byte[] excelData = excelExportService.exportTransactionsToExcel(allFiltered);
+
+        // 5. Send file to browser
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment", "transactions_export.xlsx");
+
+        return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
     }
 }
