@@ -2,6 +2,7 @@ package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.ContactInputDto;
 import com.els.crmsystem.dto.output.CompanyOutputDto;
+import com.els.crmsystem.dto.output.ContactOutputDto;
 import com.els.crmsystem.enums.ContactRole;
 import com.els.crmsystem.service.CompanyService;
 import com.els.crmsystem.service.ContactService;
@@ -9,6 +10,7 @@ import com.els.crmsystem.service.FinanceService;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -37,10 +39,29 @@ public class ContactController {
         return companyService.getAllActiveCompanies();
     }
 
-    // 1. Show the list of all active contacts
+    // 1. Show the list of all active contacts (WITH FILTERING & PAGINATION)
     @GetMapping
-    public String listContacts(Model model) {
-        model.addAttribute("contacts", contactService.getAllActiveContacts());
+    public String listContacts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(defaultValue = "name") String sortField,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) ContactRole role,
+            Model model) {
+
+        Page<ContactOutputDto> contactPage = contactService.getFilteredAndSortedContacts(name, role, page, size, sortField, sortDir);
+
+        model.addAttribute("contacts", contactPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", contactPage.getTotalPages());
+
+        // Keep filters in the UI
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("currentName", name);
+        model.addAttribute("currentRole", role);
+
         return "contacts/list";
     }
 
