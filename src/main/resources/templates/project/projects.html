@@ -19,6 +19,35 @@
         </div>
     </div>
 
+    <div class="card shadow-sm border-0 mb-4 bg-white" style="border-radius: 12px;">
+        <div class="card-body p-3">
+            <form method="get" action="/projects" class="row g-2 align-items-end">
+
+                <input type="hidden" name="sortField" th:value="${sortField}">
+                <input type="hidden" name="sortDir" th:value="${sortDir}">
+
+                <div class="col-12 col-md-5">
+                    <label class="form-label text-muted small fw-bold mb-1">Пошук за назвою</label>
+                    <input type="text" name="name" class="form-control form-control-sm" placeholder="Введіть назву проєкту..." th:value="${currentName}" autocomplete="off">
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label text-muted small fw-bold mb-1">Статус проєкту</label>
+                    <select name="active" class="form-select form-select-sm">
+                        <option value="">Всі статуси</option>
+                        <option value="true" th:selected="${currentActive == true}">🟢 Активні</option>
+                        <option value="false" th:selected="${currentActive == false}">⚪ Завершені</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-3 d-flex gap-2 mt-3 mt-md-auto">
+                    <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold py-2 py-md-1"><i class="bi bi-search me-1"></i> Знайти</button>
+                    <a href="/projects" class="btn btn-sm btn-outline-secondary w-100 py-2 py-md-1">Скинути</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show shadow-sm">
         ✅ Проєкт успішно створено!
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -29,10 +58,20 @@
             <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
                 <thead class="table-light">
                 <tr>
-                    <th style="width: 30%;" class="ps-4">Проєкт</th>
+                    <th style="width: 30%;" class="ps-4">
+                        <a class="text-dark text-decoration-none d-flex align-items-center"
+                           th:href="@{/projects(sortField='name', sortDir=${sortField == 'name' and sortDir == 'asc' ? 'desc' : 'asc'}, name=${currentName}, active=${currentActive})}">
+                            Проєкт <i class="bi ms-1" th:classappend="${sortField == 'name'} ? (${sortDir == 'desc'} ? 'bi-sort-down' : 'bi-sort-up') : 'bi-arrow-down-up text-muted opacity-25'"></i>
+                        </a>
+                    </th>
                     <th style="width: 25%;">Адреса</th>
                     <th>Клієнт / Постачальник</th>
-                    <th style="width: 120px;">Статус</th>
+                    <th style="width: 120px;">
+                        <a class="text-dark text-decoration-none d-flex align-items-center"
+                           th:href="@{/projects(sortField='active', sortDir=${sortField == 'active' and sortDir == 'desc' ? 'asc' : 'desc'}, name=${currentName}, active=${currentActive})}">
+                            Статус <i class="bi ms-1" th:classappend="${sortField == 'active'} ? (${sortDir == 'desc'} ? 'bi-sort-down' : 'bi-sort-up') : 'bi-arrow-down-up text-muted opacity-25'"></i>
+                        </a>
+                    </th>
                     <th style="width: 80px;" class="text-center pe-4">Дії</th>
                 </tr>
                 </thead>
@@ -111,6 +150,19 @@
         </div>
     </div>
 
+    <nav aria-label="Page navigation" th:if="${totalPages > 1}" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{/projects(page=${currentPage - 1}, sortField=${sortField}, sortDir=${sortDir}, name=${currentName}, active=${currentActive})}">Попередня</a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${currentPage == i ? 'active' : ''}">
+                <a class="page-link" th:href="@{/projects(page=${i}, sortField=${sortField}, sortDir=${sortDir}, name=${currentName}, active=${currentActive})}" th:text="${i + 1}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{/projects(page=${currentPage + 1}, sortField=${sortField}, sortDir=${sortDir}, name=${currentName}, active=${currentActive})}">Наступна</a>
+            </li>
+        </ul>
+    </nav>
 </div>
 
 <script>

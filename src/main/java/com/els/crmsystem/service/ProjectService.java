@@ -10,7 +10,13 @@ import com.els.crmsystem.repository.CompanyRepository;
 import com.els.crmsystem.repository.ContactRepository;
 import com.els.crmsystem.repository.ProjectRepository;
 import com.els.crmsystem.repository.TransactionRepository;
+import com.els.crmsystem.specification.ProjectSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -164,5 +170,25 @@ public class ProjectService {
             throw new RuntimeException("Cannot delete project! It has associated transactions. Please 'Close' it instead to preserve financial history.");
         }
         projectRepository.deleteById(id);
+    }
+
+    // 🔍 DYNAMIC FILTERING & SORTING FOR PROJECTS
+    public Page<ProjectOutputDto> getFilteredAndSortedProjects(
+            String name,
+            Boolean active,
+            int page,
+            int size,
+            String sortField,
+            String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortField).ascending()
+                : Sort.by(sortField).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Specification<Project> spec = ProjectSpecification.filterBy(name, active);
+
+        return projectRepository.findAll(spec, pageable).map(mapper::toOutputDto);
     }
 }
