@@ -28,11 +28,31 @@ public class CompanyController {
         return CompanyRole.values();
     }
 
-    // 1. Show the list of all active companies
+    // 1. Show the list of all active companies (WITH FILTERING & PAGINATION)
     @GetMapping
-    public String listCompanies(Model model) {
-        model.addAttribute("companies", companyService.getAllActiveCompanies());
-        return "companies/list"; // We will build this HTML file next
+    public String listCompanies(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(defaultValue = "name") String sortField,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) CompanyRole role,
+            Model model) {
+
+        org.springframework.data.domain.Page<com.els.crmsystem.dto.output.CompanyOutputDto> companyPage =
+                companyService.getFilteredAndSortedCompanies(name, role, page, size, sortField, sortDir);
+
+        model.addAttribute("companies", companyPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", companyPage.getTotalPages());
+
+        // Keep filters in the UI
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("currentName", name);
+        model.addAttribute("currentRole", role);
+
+        return "companies/list";
     }
 
     // 2. Show the "Create New Company" form

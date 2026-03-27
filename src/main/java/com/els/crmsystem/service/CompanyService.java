@@ -5,7 +5,13 @@ import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.entity.Company;
 import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.CompanyRepository;
+import com.els.crmsystem.specification.CompanySpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,5 +86,27 @@ public class CompanyService {
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
         company.setActive(false);
         companyRepository.save(company);
+    }
+
+    // 🔍 DYNAMIC FILTERING & SORTING FOR COMPANIES
+    public Page<CompanyOutputDto> getFilteredAndSortedCompanies(
+            String name,
+            com.els.crmsystem.enums.CompanyRole role,
+            int page,
+            int size,
+            String sortField,
+            String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortField).ascending()
+                : Sort.by(sortField).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Always pass 'true' for active so we hide deleted companies
+        Specification<Company> spec =
+                CompanySpecification.filterBy(name, role, true);
+
+        return companyRepository.findAll(spec, pageable).map(entityMapper::toOutputDto);
     }
 }
