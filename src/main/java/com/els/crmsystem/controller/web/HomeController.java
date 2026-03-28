@@ -2,6 +2,7 @@ package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.output.ProjectOutputDto;
 import com.els.crmsystem.dto.output.TransactionOutputDto;
+import com.els.crmsystem.service.ExchangeRateService;
 import com.els.crmsystem.service.FinanceService;
 import com.els.crmsystem.service.ProjectService;
 import com.els.crmsystem.service.TransactionService;
@@ -20,6 +21,7 @@ public class HomeController {
     private final ProjectService projectService;
     private final TransactionService transactionService;
     private final FinanceService financeService;
+    private final ExchangeRateService exchangeRateService;
 
     @GetMapping("/")
     public String showDashboard(Model model) {
@@ -31,6 +33,7 @@ public class HomeController {
         model.addAttribute("totalBalance", financeService.calculateTotalBalance(allTransactions));
         model.addAttribute("totalIncome", financeService.calculateTotalIncome(allTransactions));
         model.addAttribute("totalExpense", financeService.calculateTotalExpense(allTransactions));
+        model.addAttribute("exchangeRates", exchangeRateService.getCurrentRates());
 
         // 3. Get Top 5 Most Recent Transactions
         List<TransactionOutputDto> recentTransactions = allTransactions.stream()

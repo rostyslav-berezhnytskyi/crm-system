@@ -20,6 +20,34 @@
         </div>
     </div>
 
+    <div class="row mb-4" th:if="${not #lists.isEmpty(exchangeRates)}">
+        <div class="col-12">
+            <div class="card shadow-sm border-0" style="border-radius: 12px; background: linear-gradient(to right, #2b3035, #343a40);">
+                <div class="card-body py-2 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+
+                    <div class="text-white d-flex align-items-center">
+                        <i class="bi bi-currency-exchange fs-4 me-2 text-warning"></i>
+                        <span class="fw-bold">Курси валют (НБУ / Ринок)</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-center gap-3 gap-md-5">
+                        <div th:each="rate : ${exchangeRates}" class="d-flex align-items-center">
+                            <div class="me-3">
+                                <strong th:if="${rate.currency() == 'USD'}" class="text-success fs-5">🇺🇸 USD</strong>
+                                <strong th:if="${rate.currency() == 'EUR'}" class="text-info fs-5">🇪🇺 EUR</strong>
+                            </div>
+                            <div class="d-flex flex-column border-start border-secondary ps-3 border-opacity-50 text-white-50 small" style="line-height: 1.3;">
+                                <div>Офіційний: <span class="fw-bold text-white" th:text="${#numbers.formatDecimal(rate.officialRate(), 1, 2)}"></span></div>
+                                <div>Готівка: <span class="text-white" th:text="${#numbers.formatDecimal(rate.marketBuy(), 1, 2)}"></span> / <span class="text-white" th:text="${#numbers.formatDecimal(rate.marketSell(), 1, 2)}"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-4">
             <div class="card shadow-sm border-0 border-start border-4 border-success h-100" style="border-radius: 12px;">
