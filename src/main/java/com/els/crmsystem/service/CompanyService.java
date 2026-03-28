@@ -109,4 +109,12 @@ public class CompanyService {
 
         return companyRepository.findAll(spec, pageable).map(entityMapper::toOutputDto);
     }
+
+    public List<CompanyOutputDto> getAllFilteredCompanies(String name, com.els.crmsystem.enums.CompanyRole role) {
+        org.springframework.data.jpa.domain.Specification<Company> spec =
+                com.els.crmsystem.specification.CompanySpecification.filterBy(name, role, true);
+        return companyRepository.findAll(spec).stream()
+                .map(entityMapper::toOutputDto)
+                .collect(Collectors.toList());
+    }
 }

@@ -4,13 +4,15 @@ import com.els.crmsystem.dto.input.ContactInputDto;
 import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.dto.output.ContactOutputDto;
 import com.els.crmsystem.enums.ContactRole;
-import com.els.crmsystem.service.CompanyService;
-import com.els.crmsystem.service.ContactService;
-import com.els.crmsystem.service.FinanceService;
-import com.els.crmsystem.service.TransactionService;
+import com.els.crmsystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,6 +29,7 @@ public class ContactController {
     private final CompanyService companyService;
     private final TransactionService transactionService;
     private final FinanceService financeService;
+    private final ExcelExportService excelExportService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -136,5 +139,21 @@ public class ContactController {
     public String deleteContact(@PathVariable Long id) {
         contactService.deactivateContact(id);
         return "redirect:/contacts";
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTOR')")
+    @GetMapping("/export") // Assuming the class has @RequestMapping("/contacts")
+    public ResponseEntity<byte[]> exportContacts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) ContactRole role) {
+
+        List<ContactOutputDto> allFiltered = contactService.getAllFilteredContacts(name, role);
+        byte[] excelData = excelExportService.exportContactsToExcel(allFiltered);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment", "contacts_export.xlsx");
+
+        return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
     }
 }

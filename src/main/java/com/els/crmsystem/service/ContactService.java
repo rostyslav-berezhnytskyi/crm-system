@@ -116,4 +116,12 @@ public class ContactService {
 
         return contactRepository.findAll(spec, pageable).map(entityMapper::toOutputDto);
     }
+
+    public List<ContactOutputDto> getAllFilteredContacts(String name, com.els.crmsystem.enums.ContactRole role) {
+        org.springframework.data.jpa.domain.Specification<Contact> spec =
+                com.els.crmsystem.specification.ContactSpecification.filterBy(name, role, true);
+        return contactRepository.findAll(spec).stream()
+                .map(entityMapper::toOutputDto)
+                .collect(Collectors.toList());
+    }
 }

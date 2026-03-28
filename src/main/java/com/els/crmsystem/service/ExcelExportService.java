@@ -77,4 +77,80 @@ public class ExcelExportService {
             throw new RuntimeException("Помилка під час створення Excel файлу", e);
         }
     }
+
+    // --- COMPANIES EXPORT ---
+    public byte[] exportCompaniesToExcel(List<com.els.crmsystem.dto.output.CompanyOutputDto> companies) {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Компанії");
+
+            Row headerRow = sheet.createRow(0);
+            String[] columns = {"Назва компанії", "Роль", "Телефон", "Email", "Вебсайт", "Нотатки"};
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            for (int i = 0; i < columns.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(columns[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            int rowIdx = 1;
+            for (com.els.crmsystem.dto.output.CompanyOutputDto c : companies) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(c.name() != null ? c.name() : "");
+                row.createCell(1).setCellValue(c.role() != null ? c.role().getUkrainianName() : "");
+                row.createCell(2).setCellValue(c.mainPhone() != null ? c.mainPhone() : "");
+                row.createCell(3).setCellValue(c.email() != null ? c.email() : "");
+                row.createCell(4).setCellValue(c.website() != null ? c.website() : "");
+                row.createCell(5).setCellValue(c.notes() != null ? c.notes() : "");
+            }
+
+            for (int i = 0; i < columns.length; i++) { sheet.autoSizeColumn(i); }
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Помилка під час створення Excel файлу компаній", e);
+        }
+    }
+
+    // --- CONTACTS EXPORT ---
+    public byte[] exportContactsToExcel(List<com.els.crmsystem.dto.output.ContactOutputDto> contacts) {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Контакти");
+
+            Row headerRow = sheet.createRow(0);
+            String[] columns = {"Ім'я", "Роль", "Компанія", "Телефон", "Email", "Нотатки"};
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            for (int i = 0; i < columns.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(columns[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            int rowIdx = 1;
+            for (com.els.crmsystem.dto.output.ContactOutputDto c : contacts) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(c.name() != null ? c.name() : "");
+                row.createCell(1).setCellValue(c.role() != null ? c.role().getUkrainianName() : "");
+                row.createCell(2).setCellValue(c.companyName() != null ? c.companyName() : "- Незалежний -");
+                row.createCell(3).setCellValue(c.phone() != null ? c.phone() : "");
+                row.createCell(4).setCellValue(c.email() != null ? c.email() : "");
+                row.createCell(5).setCellValue(c.notes() != null ? c.notes() : "");
+            }
+
+            for (int i = 0; i < columns.length; i++) { sheet.autoSizeColumn(i); }
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Помилка під час створення Excel файлу контактів", e);
+        }
+    }
 }

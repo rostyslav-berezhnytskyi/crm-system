@@ -1,17 +1,26 @@
 package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.CompanyInputDto;
+import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.enums.CompanyRole;
 import com.els.crmsystem.service.CompanyDocumentService;
 import com.els.crmsystem.service.CompanyService;
+import com.els.crmsystem.service.ExcelExportService;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/companies")
@@ -21,6 +30,7 @@ public class CompanyController {
     private final CompanyService companyService;
     private final CompanyDocumentService documentService;
     private final TransactionService transactionService;
+    private final ExcelExportService excelExportService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -124,5 +134,21 @@ public class CompanyController {
     public String deleteDocument(@PathVariable Long docId, @RequestParam("companyId") Long companyId) {
         documentService.deleteDocument(docId);
         return "redirect:/companies/" + companyId;
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTOR')")
+    @GetMapping("/export") // Assuming the class has @RequestMapping("/companies")
+    public ResponseEntity<byte[]> exportCompanies(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) CompanyRole role) {
+
+        List<CompanyOutputDto> allFiltered = companyService.getAllFilteredCompanies(name, role);
+        byte[] excelData = excelExportService.exportCompaniesToExcel(allFiltered);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment", "companies_export.xlsx");
+
+        return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
     }
 }

@@ -13,6 +13,13 @@
         <h2 class="mb-0 text-center text-sm-start">🏢 Довідник компаній</h2>
 
         <div class="w-100 d-flex flex-column flex-sm-row justify-content-sm-end gap-2" style="max-width: 450px;">
+
+            <a th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''DIRECTOR'')')}"
+               th:href="@{/companies/export(name=${currentName}, role=${currentRole})}"
+               class="btn btn-success text-nowrap w-100 w-sm-auto shadow-sm">
+                <i class="bi bi-file-earmark-excel me-1"></i> Експорт
+            </a>
+
             <a href="/contacts" class="btn btn-outline-secondary text-nowrap w-100 w-sm-auto shadow-sm">📇 Контакти</a>
             <a href="/companies/new" class="btn btn-primary text-nowrap w-100 w-sm-auto shadow-sm">
                 <i class="bi bi-building-add me-1"></i> Додати компанію

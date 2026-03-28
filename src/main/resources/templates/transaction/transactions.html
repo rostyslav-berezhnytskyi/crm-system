@@ -13,7 +13,8 @@
         <h2 class="mb-0 text-center text-sm-start">💰 Транзакції</h2>
         <div class="w-100 d-flex flex-column flex-sm-row justify-content-center justify-content-sm-end gap-2">
 
-            <a th:href="@{/transactions/export(projectId=${currentProjectId}, type=${currentType}, category=${currentCategory}, sellerValue=${currentSellerValue}, startDate=${currentStartDate}, endDate=${currentEndDate}, description=${currentDescription})}"
+            <a th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''DIRECTOR'')')}"
+               th:href="@{/transactions/export(projectId=${currentProjectId}, type=${currentType}, category=${currentCategory}, sellerValue=${currentSellerValue}, startDate=${currentStartDate}, endDate=${currentEndDate}, description=${currentDescription})}"
                class="btn btn-success text-nowrap shadow-sm w-100 w-sm-auto">
                 <i class="bi bi-file-earmark-excel me-1"></i> Експорт в Excel
             </a>
