@@ -2,6 +2,7 @@ package com.els.crmsystem.config;
 
 import com.els.crmsystem.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -42,6 +43,7 @@ public class SecurityConfig {
 
                         // 2. GOD MODE (Users)
                         .requestMatchers("/register", "/users", "/users/**").hasRole("ADMIN")
+                        .requestMatchers("/").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER") // <-- Блокує доступ Монтажникам до фінансів
 
                         // 3. MONEY & CRM ZONE (Transactions, Contacts, Companies)
                         .requestMatchers(
@@ -50,22 +52,22 @@ public class SecurityConfig {
                                 "/companies", "/companies/**"
                         ).hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
 
-                        // 4. PROJECT MANAGEMENT (Create, Edit, Delete)
+                        // 4. PROJECT CREATION & MANAGEMENT (Суворо для Керівництва)
+                        .requestMatchers(HttpMethod.POST, "/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER") // <-- Закриває дірку з POST
                         .requestMatchers(
                                 "/projects/new",
                                 "/projects/edit/**",
                                 "/projects/update/**",
                                 "/projects/delete/**",
-                                "/projects/*/equipment",           // Add equipment
-                                "/projects/equipment/*/delete",    // Delete equipment
-                                "/projects/*/contacts/add",        // Add extra contacts
-                                "/projects/*/contacts/*/remove"    // Remove extra contacts
+                                "/projects/*/equipment",
+                                "/projects/equipment/*/delete",
+                                "/projects/*/contacts/add",
+                                "/projects/*/contacts/*/remove"
                         ).hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
-                        .requestMatchers("/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER", "GUEST")
 
                         // 5. VIEWING THE PROJECT LIST
                         // (Guests/Clients are allowed to see the main list if you want them to)
-                        .requestMatchers("/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER", "GUEST")
+                        .requestMatchers(HttpMethod.GET, "/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER", "GUEST")
 
                         // 6. OPERATIONAL ZONE (View Projects, Upload Photos)
                         // INSTALLER is allowed here.
@@ -77,7 +79,7 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/projects", true)
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
                 // --- REMEMBER ME CONFIGURATION ---
