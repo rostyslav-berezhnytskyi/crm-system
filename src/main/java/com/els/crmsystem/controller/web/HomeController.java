@@ -42,12 +42,21 @@ public class HomeController {
                 .toList();
         model.addAttribute("recentTransactions", recentTransactions);
 
-        // 4. Get Active Projects (Limit to 5 for the dashboard)
-        List<ProjectOutputDto> activeProjects = projectService.getAllActiveProjects().stream()
+        // 4. Get All Active Projects
+        List<ProjectOutputDto> allActiveProjects = projectService.getAllActiveProjects();
+
+        // 4a. Top 5 for the sidebar list
+        List<ProjectOutputDto> recentActiveProjects = allActiveProjects.stream()
                 .sorted(Comparator.comparing(ProjectOutputDto::createdDate).reversed())
                 .limit(5)
                 .toList();
-        model.addAttribute("activeProjects", activeProjects);
+        model.addAttribute("activeProjects", recentActiveProjects);
+
+        // 4b. ALL projects with GPS coordinates for the Map
+        List<ProjectOutputDto> mapProjects = allActiveProjects.stream()
+                .filter(p -> p.latitude() != null && p.longitude() != null)
+                .toList();
+        model.addAttribute("mapProjects", mapProjects);
 
         return "index";
     }

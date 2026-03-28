@@ -48,9 +48,14 @@
                 <div class="card-header bg-dark text-white fw-bold py-3"><i class="bi bi-info-circle me-1"></i> Деталі об'єкта</div>
                 <div class="card-body p-4">
                     <p class="mb-2"><i class="bi bi-geo-alt text-danger me-1"></i> <span th:text="${project.addressText()}"></span></p>
-                    <small class="text-muted mb-3 d-block" th:if="${project.latitude() != null}">GPS: <span th:text="${project.latitude()}"></span>, <span th:text="${project.longitude()}"></span></small>
+                    <small class="text-muted d-block" th:if="${project.latitude() != null}">GPS: <span th:text="${project.latitude()}"></span>, <span th:text="${project.longitude()}"></span></small>
                     <hr class="opacity-25">
                     <p class="mb-0 text-dark" style="white-space: pre-wrap;" th:text="${project.description() != null and !project.description().isEmpty() ? project.description() : 'Опис відсутній.'}"></p>
+
+                    <div th:if="${project.latitude() != null and project.longitude() != null}"
+                         id="singleProjectMap"
+                         style="height: 250px; border-radius: 8px; z-index: 1; margin-top: 20px; border: 1px solid #dee2e6;">
+                    </div>
                 </div>
             </div>
 
@@ -360,6 +365,34 @@
     </div>
 </div>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // 1. Grab coordinates from Spring Boot
+        /*<![CDATA[*/
+        const lat = /*[[${project.latitude()}]]*/ null;
+        const lng = /*[[${project.longitude()}]]*/ null;
+        const projName = /*[[${project.name()}]]*/ 'Проєкт';
+        /*]]>*/
+
+        // 2. Only draw the map if coordinates exist!
+        if (lat && lng) {
+            // Zoom level 14 is perfect for viewing neighborhood streets
+            const map = L.map('singleProjectMap').setView([lat, lng], 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // 3. Drop the pin and open a label automatically
+            const marker = L.marker([lat, lng]).addTo(map);
+            marker.bindPopup(`<strong style="font-size: 0.9rem;">${projName}</strong>`).openPopup();
+        }
+    });
+</script>
 <div th:replace="~{fragments :: scripts}"></div>
 </body>
 </html>
