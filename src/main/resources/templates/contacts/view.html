@@ -54,20 +54,20 @@
                             <div class="card-body p-4">
                                 <h6 class="fw-bold text-muted mb-4"><i class="bi bi-pie-chart-fill me-2"></i>Фінансова аналітика контрагента</h6>
 
-                                <div class="row text-center mb-4 g-3">
-                                    <div class="col-4 border-end">
-                                        <div class="text-muted small fw-bold text-uppercase mb-1">Отримано (Дохід)</div>
-                                        <h5 class="text-success mb-0 fw-bold">+ <span th:text="${#numbers.formatDecimal(totalIncome, 1, 'WHITESPACE', 2, 'POINT')}"></span> ₴</h5>
+                                <div class="row text-center mb-4 g-2">
+                                    <div class="col-4 border-end px-1">
+                                        <div class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Дохід</div>
+                                        <h6 class="text-success mb-0 fw-bold text-nowrap">+ <span th:text="${#numbers.formatDecimal(totalIncome, 1, 'WHITESPACE', 2, 'POINT')}"></span> ₴</h6>
                                     </div>
-                                    <div class="col-4 border-end">
-                                        <div class="text-muted small fw-bold text-uppercase mb-1">Сплачено (Витрати)</div>
-                                        <h5 class="text-danger mb-0 fw-bold">- <span th:text="${#numbers.formatDecimal(totalExpense, 1, 'WHITESPACE', 2, 'POINT')}"></span> ₴</h5>
+                                    <div class="col-4 border-end px-1">
+                                        <div class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Витрати</div>
+                                        <h6 class="text-danger mb-0 fw-bold text-nowrap">- <span th:text="${#numbers.formatDecimal(totalExpense, 1, 'WHITESPACE', 2, 'POINT')}"></span> ₴</h6>
                                     </div>
-                                    <div class="col-4">
-                                        <div class="text-muted small fw-bold text-uppercase mb-1">Чистий баланс</div>
-                                        <h5 class="mb-0 fw-bold" th:classappend="${totalBalance >= 0 ? 'text-success' : 'text-danger'}">
+                                    <div class="col-4 px-1">
+                                        <div class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Баланс</div>
+                                        <h6 class="mb-0 fw-bold text-nowrap" th:classappend="${totalBalance >= 0 ? 'text-success' : 'text-danger'}">
                                             <span th:text="${totalBalance > 0 ? '+' : ''}"></span><span th:text="${#numbers.formatDecimal(totalBalance, 1, 'WHITESPACE', 2, 'POINT')}"></span> ₴
-                                        </h5>
+                                        </h6>
                                     </div>
                                 </div>
 
@@ -79,7 +79,7 @@
                                                 <i class="bi bi-circle-fill me-2 text-warning" style="font-size: 0.5rem;"></i>
                                                 <span th:text="${entry.key.getUkrainianName()}"></span>
                                             </span>
-                                            <strong class="text-dark bg-white border px-2 py-1 rounded" th:text="${#numbers.formatDecimal(entry.value, 1, 'WHITESPACE', 2, 'POINT')} + ' ₴'"></strong>
+                                            <strong class="text-dark bg-white border px-2 py-1 rounded text-nowrap" th:text="${#numbers.formatDecimal(entry.value, 1, 'WHITESPACE', 2, 'POINT')} + ' ₴'"></strong>
                                         </div>
                                     </div>
                                 </th:block>

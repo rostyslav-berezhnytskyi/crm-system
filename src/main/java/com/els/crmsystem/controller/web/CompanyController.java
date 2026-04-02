@@ -3,10 +3,7 @@ package com.els.crmsystem.controller.web;
 import com.els.crmsystem.dto.input.CompanyInputDto;
 import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.enums.CompanyRole;
-import com.els.crmsystem.service.CompanyDocumentService;
-import com.els.crmsystem.service.CompanyService;
-import com.els.crmsystem.service.ExcelExportService;
-import com.els.crmsystem.service.TransactionService;
+import com.els.crmsystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +28,7 @@ public class CompanyController {
     private final CompanyDocumentService documentService;
     private final TransactionService transactionService;
     private final ExcelExportService excelExportService;
+    private final FinanceService financeService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -77,9 +75,16 @@ public class CompanyController {
     public String viewCompany(@PathVariable Long id, Model model) {
         model.addAttribute("company", companyService.getCompanyById(id));
         model.addAttribute("documents", documentService.getDocumentsForCompany(id));
-        model.addAttribute("transactions", transactionService.getTransactionsByCompanyId(id));
 
-        return "companies/view"; // (Or whatever your path is to company-view.html)
+        // Отримуємо транзакції та рахуємо фінанси
+        List<com.els.crmsystem.dto.output.TransactionOutputDto> txns = transactionService.getTransactionsByCompanyId(id);
+        model.addAttribute("transactions", txns);
+        model.addAttribute("totalBalance", financeService.calculateTotalBalance(txns));
+        model.addAttribute("totalIncome", financeService.calculateTotalIncome(txns));
+        model.addAttribute("totalExpense", financeService.calculateTotalExpense(txns));
+        model.addAttribute("expenseBreakdown", financeService.getExpenseBreakdownByCategory(txns));
+
+        return "companies/view";
     }
 
     // 3. Process the form submission
