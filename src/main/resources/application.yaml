@@ -46,3 +46,14 @@ server:
   servlet:
     session:
       timeout: 24h
+
+logging:
+  file:
+    name: logs/els-crm.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB  # When it hits 10MB, it archives it and starts a new file
+      max-history: 30      # Keeps 30 days of history, deletes the rest automatically
+  level:
+    root: INFO
+    com.els.crmsystem: INFO  # Shows standard info for your app. Change to DEBUG if you need deep troubleshooting.

@@ -12,11 +12,13 @@ import com.els.crmsystem.repository.ProjectRepository;
 import com.els.crmsystem.repository.TransactionRepository;
 import com.els.crmsystem.specification.ProjectSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -37,6 +40,9 @@ public class ProjectService {
 
     @Transactional
     public void createProject(ProjectInputDto dto) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("User '{}' created a new project: '{}'", currentUser, dto.name());
+
         if (projectRepository.existsByName(dto.name())) {
             throw new RuntimeException("Project with this name already exists: " + dto.name());
         }
@@ -163,6 +169,20 @@ public class ProjectService {
 
     @Transactional
     public void deleteProject(Long id) {
+        // 1. Fetch first
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cannot delete. Project not found: " + id));
+
+        // 2. Check business rules
+        if (transactionRepository.existsByProjectId(id)) {
+            throw new RuntimeException("Cannot delete project! It has associated transactions. Please 'Close' it instead to preserve financial history.");
+        }
+
+        // 3. Log the valuable info
+        String currentUser = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        log.warn("CRITICAL: User '{}' PERMANENTLY DELETED project: '{}' (ID: {})", currentUser, project.getName(), id);
+
+
         if (!projectRepository.existsById(id)) {
             throw new RuntimeException("Cannot delete. Project not found: " + id);
         }

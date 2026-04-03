@@ -9,6 +9,7 @@ import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -28,6 +30,7 @@ import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class WebTransactionController {
 
     private final TransactionService transactionService;
@@ -144,7 +147,7 @@ public class WebTransactionController {
     }
 
     // --- 4. DELETE ACTION ---
-    @GetMapping("/transactions/delete/{id}")
+    @PostMapping("/transactions/delete/{id}")
     public String deleteTransaction(@PathVariable Long id) {
         transactionService.deleteTransaction(id);
         return "redirect:/transactions";
@@ -237,6 +240,9 @@ public class WebTransactionController {
             @RequestParam(required = false) TransactionCategory category,
             @RequestParam(required = false) String sellerValue,
             @RequestParam(required = false) String description) {
+
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.warn("SECURITY AUDIT: User '{}' downloaded the TRANSACTIONS Excel Database.", currentUser);
 
         // 1. Parse Seller Value
         Long companyId = null;

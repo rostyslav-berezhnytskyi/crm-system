@@ -7,12 +7,14 @@ import com.els.crmsystem.enums.ContactRole;
 import com.els.crmsystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,6 +25,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/contacts")
 @RequiredArgsConstructor
+@Slf4j
 public class ContactController {
 
     private final ContactService contactService;
@@ -146,6 +149,9 @@ public class ContactController {
     public ResponseEntity<byte[]> exportContacts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ContactRole role) {
+
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.warn("SECURITY AUDIT: User '{}' downloaded the CONTACTS Excel Database.", currentUser);
 
         List<ContactOutputDto> allFiltered = contactService.getAllFilteredContacts(name, role);
         byte[] excelData = excelExportService.exportContactsToExcel(allFiltered);

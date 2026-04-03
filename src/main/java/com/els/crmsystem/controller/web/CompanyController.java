@@ -6,11 +6,13 @@ import com.els.crmsystem.enums.CompanyRole;
 import com.els.crmsystem.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,6 +24,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/companies")
 @RequiredArgsConstructor
+@Slf4j
 public class CompanyController {
 
     private final CompanyService companyService;
@@ -146,6 +149,9 @@ public class CompanyController {
     public ResponseEntity<byte[]> exportCompanies(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) CompanyRole role) {
+
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.warn("SECURITY AUDIT: User '{}' downloaded the COMPANIES Excel Database.", currentUser);
 
         List<CompanyOutputDto> allFiltered = companyService.getAllFilteredCompanies(name, role);
         byte[] excelData = excelExportService.exportCompaniesToExcel(allFiltered);

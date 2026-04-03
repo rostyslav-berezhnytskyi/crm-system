@@ -8,9 +8,12 @@ import com.els.crmsystem.enums.Role;
 import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // Use Spring's Transactional
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +25,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -35,6 +39,9 @@ public class UserService {
      */
     @Transactional
     public void registerUser(UserInputDto dto) {
+        String adminUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("New registration attempt for username: {} by user: {}", dto.username(), adminUser);
+
         // 1. Validation checks (using getters from DTO record)
         if (userRepository.existsByUsername(dto.username())) {
             throw new RuntimeException("Username is already taken: " + dto.username());
@@ -46,11 +53,13 @@ public class UserService {
         // 2. Convert DTO -> Entity using the Mapper
         User user = mapper.toEntity(dto);
 
-        // HERE IS THE MAGIC: Hash the password before saving
+        // Hash the password before saving
         String hashedPassword = passwordEncoder.encode(dto.password());
         user.setPassword(hashedPassword);
 
         userRepository.save(user);
+
+        log.info("SECURITY: Admin '{}' successfully registered user: {}", adminUser, dto.username());
     }
 
     /**
@@ -76,7 +85,10 @@ public class UserService {
      * Includes logic to prevent taking someone else's username/email.
      */
     @Transactional
-    public void adminUpdateUser(Long id, UserEditDto dto, org.springframework.web.multipart.MultipartFile photo) {
+    public void adminUpdateUser(Long id, UserEditDto dto, MultipartFile photo) {
+        String adminUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("Admin '{}' updated profile/permissions for User ID: {}", adminUser, id);
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
@@ -116,6 +128,9 @@ public class UserService {
      */
     @Transactional
     public void deleteById(Long id) {
+        String adminUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.warn("CRITICAL: Admin '{}' DELETED User ID: {}", adminUser, id);
+
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("Cannot delete. User not found: " + id);
         }

@@ -9,11 +9,13 @@ import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.CompanyRepository;
 import com.els.crmsystem.repository.ContactRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ContactService {
 
     private final ContactRepository contactRepository;
@@ -30,6 +33,9 @@ public class ContactService {
 
     @Transactional
     public void createContact(ContactInputDto dto) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("Created new contact: '{}' with role: {} by user: {}", dto.name(), dto.role(), currentUser);
+
         Contact contact = new Contact();
         contact.setName(dto.name());
         contact.setRole(dto.role());
@@ -94,6 +100,9 @@ public class ContactService {
 
     @Transactional
     public void deactivateContact(Long id) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.warn("User '{}' DEACTIVATED contact ID: {}", currentUser, id);
+
         Contact contact = contactRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Contact not found"));
         contact.setActive(false);

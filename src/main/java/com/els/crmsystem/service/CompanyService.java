@@ -7,11 +7,13 @@ import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.CompanyRepository;
 import com.els.crmsystem.specification.CompanySpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CompanyService {
 
     private final CompanyRepository companyRepository;
@@ -27,6 +30,9 @@ public class CompanyService {
 
     @Transactional
     public void createCompany(CompanyInputDto dto) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("Created new company: '{}' with role: {}, by user: {}", dto.name(), dto.role(), currentUser);
+
         Company company = new Company();
         company.setName(dto.name());
         company.setRole(dto.role());
@@ -82,6 +88,9 @@ public class CompanyService {
 
     @Transactional
     public void deactivateCompany(Long id) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.warn("User '{}' DEACTIVATED company ID: {}", currentUser, id);
+
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
         company.setActive(false);

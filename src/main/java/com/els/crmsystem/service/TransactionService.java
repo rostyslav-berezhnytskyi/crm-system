@@ -12,11 +12,13 @@ import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.*;
 import com.els.crmsystem.specification.TransactionSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
@@ -46,6 +49,8 @@ public class TransactionService {
      */
     @Transactional
     public void createTransaction(TransactionInputDto dto, String username) {
+        log.info("User '{}' is creating a {} transaction of {} UAH for Project ID: {}",
+                username, dto.type(), dto.amount(), dto.projectId());
 
         // 1. Fetch User (Who is creating this transaction)
         User user = userRepository.findByUsername(username)
@@ -103,6 +108,8 @@ public class TransactionService {
 
     @Transactional
     public void updateTransaction(Long id, TransactionInputDto dto, String username) {
+        log.info("User '{}' is UPDATING transaction ID: {}", username, id);
+
         // 1. Find the existing transaction
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
@@ -201,6 +208,17 @@ public class TransactionService {
 
     @Transactional
     public void deleteTransaction(Long id) {
+        // 1. Fetch the transaction BEFORE we delete it so we know what it is
+        Transaction txn = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found: " + id));
+
+        // 2. Grab the user
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // 3. Log the ACTUAL valuable information
+        log.warn("SECURITY: User '{}' DELETED transaction ID: {} [Type: {}, Amount: {} ₴, Category: '{}', Project: '{}']",
+                currentUser, id, txn.getType(), txn.getAmount(), txn.getCategory().getUkrainianName(), txn.getProject().getName());
+
         if (!transactionRepository.existsById(id)) {
             throw new RuntimeException("Transaction not found: " + id);
         }
