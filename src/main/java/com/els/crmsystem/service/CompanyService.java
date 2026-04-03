@@ -27,6 +27,7 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final EntityMapper entityMapper;
+    private final AuditNotificationService auditService;
 
     @Transactional
     public void createCompany(CompanyInputDto dto) {
@@ -54,6 +55,9 @@ public class CompanyService {
 
     @Transactional
     public void updateCompany(Long id, CompanyInputDto dto) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("Updated company ID: '{}' with name: '{}', role: {}, by user: {}", id, dto.name(), dto.role(), currentUser);
+
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
 
@@ -88,12 +92,13 @@ public class CompanyService {
 
     @Transactional
     public void deactivateCompany(Long id) {
-        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.warn("User '{}' DEACTIVATED company ID: {}", currentUser, id);
-
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
         company.setActive(false);
+
+        auditService.notifyCriticalAlert("ВИДАЛЕНО КОМПАНІЮ: '%s' (Роль: %s)",
+                company.getName(), company.getRole().name());
+
         companyRepository.save(company);
     }
 

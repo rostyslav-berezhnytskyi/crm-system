@@ -33,6 +33,7 @@ public class ContactController {
     private final TransactionService transactionService;
     private final FinanceService financeService;
     private final ExcelExportService excelExportService;
+    private final AuditNotificationService auditService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -150,8 +151,7 @@ public class ContactController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ContactRole role) {
 
-        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.warn("SECURITY AUDIT: User '{}' downloaded the CONTACTS Excel Database.", currentUser);
+        auditService.notifyAndLog("Експорт БД", "Завантажено Excel-файл КОНТАКТІВ");
 
         List<ContactOutputDto> allFiltered = contactService.getAllFilteredContacts(name, role);
         byte[] excelData = excelExportService.exportContactsToExcel(allFiltered);

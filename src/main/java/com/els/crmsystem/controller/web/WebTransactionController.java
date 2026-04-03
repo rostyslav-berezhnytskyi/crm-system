@@ -39,7 +39,8 @@ public class WebTransactionController {
     private final CompanyService companyService;
     private final ContactService contactService;
     private final FinanceService financeService;
-    private final ExcelExportService excelExportService; // <-- Add this
+    private final ExcelExportService excelExportService;
+    private final AuditNotificationService auditService;
 
     // --- 1. LIST PAGE (WITH PAGINATION, FILTERING & SORTING) ---
     @GetMapping("/transactions")
@@ -241,8 +242,7 @@ public class WebTransactionController {
             @RequestParam(required = false) String sellerValue,
             @RequestParam(required = false) String description) {
 
-        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.warn("SECURITY AUDIT: User '{}' downloaded the TRANSACTIONS Excel Database.", currentUser);
+        auditService.notifyAndLog("Експорт БД", "Завантажено Excel-файл ТРАНЗАКЦІЙ");
 
         // 1. Parse Seller Value
         Long companyId = null;

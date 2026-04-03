@@ -57,3 +57,8 @@ logging:
   level:
     root: INFO
     com.els.crmsystem: INFO  # Shows standard info for your app. Change to DEBUG if you need deep troubleshooting.
+
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN}
+    chat-id: ${TELEGRAM_CHAT_ID}

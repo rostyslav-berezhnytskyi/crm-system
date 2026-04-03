@@ -32,6 +32,7 @@ public class UserService {
     private final EntityMapper mapper;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
+    private final AuditNotificationService auditService;
 
     /**
      * Registers a new user in the system.
@@ -39,8 +40,7 @@ public class UserService {
      */
     @Transactional
     public void registerUser(UserInputDto dto) {
-        String adminUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.info("New registration attempt for username: {} by user: {}", dto.username(), adminUser);
+        auditService.notifyAndLog("Реєстрація користувача", "Спроба реєстрації нового користувача: %s", dto.username());
 
         // 1. Validation checks (using getters from DTO record)
         if (userRepository.existsByUsername(dto.username())) {
@@ -59,7 +59,7 @@ public class UserService {
 
         userRepository.save(user);
 
-        log.info("SECURITY: Admin '{}' successfully registered user: {}", adminUser, dto.username());
+        auditService.notifyAndLog("Успішна реєстрація", "Зареєстровано користувача: %s", dto.username());
     }
 
     /**
@@ -86,11 +86,10 @@ public class UserService {
      */
     @Transactional
     public void adminUpdateUser(Long id, UserEditDto dto, MultipartFile photo) {
-        String adminUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.info("Admin '{}' updated profile/permissions for User ID: {}", adminUser, id);
-
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+
+        auditService.notifyAndLog("Оновлення прав", "Змінено профіль/роль для користувача: %s", user.getUsername());
 
         // 1. Validation for unique username/email
         if (!Objects.equals(user.getUsername(), dto.username()) && userRepository.existsByUsername(dto.username())) {
@@ -128,12 +127,11 @@ public class UserService {
      */
     @Transactional
     public void deleteById(Long id) {
-        String adminUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.warn("CRITICAL: Admin '{}' DELETED User ID: {}", adminUser, id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cannot delete. User not found: " + id));
 
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("Cannot delete. User not found: " + id);
-        }
+        auditService.notifyCriticalAlert("ВИДАЛЕНО КОРИСТУВАЧА: %s (ID: %s)", user.getUsername(), id);
+
         userRepository.deleteById(id);
     }
 

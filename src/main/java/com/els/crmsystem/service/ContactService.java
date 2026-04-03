@@ -30,6 +30,7 @@ public class ContactService {
     private final ContactRepository contactRepository;
     private final CompanyRepository companyRepository;
     private final EntityMapper entityMapper;
+    private final AuditNotificationService auditService;
 
     @Transactional
     public void createContact(ContactInputDto dto) {
@@ -61,6 +62,9 @@ public class ContactService {
 
     @Transactional
     public void updateContact(Long id, ContactInputDto dto) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("Updated contact ID: {} with name: '{}', role: {} by user: {}", id, dto.name(), dto.role(), currentUser);
+
         Contact contact = contactRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Contact not found"));
 
@@ -100,12 +104,17 @@ public class ContactService {
 
     @Transactional
     public void deactivateContact(Long id) {
-        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.warn("User '{}' DEACTIVATED contact ID: {}", currentUser, id);
-
         Contact contact = contactRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Contact not found"));
         contact.setActive(false);
+
+        // Grab the company name safely, or say they are independent
+        String companyName = contact.getCompany() != null ? contact.getCompany().getName() : "Незалежний";
+
+        // Loud Telegram Alert - NO ID!
+        auditService.notifyCriticalAlert("ВИДАЛЕНО КОНТАКТ: '%s' (Роль: %s, Компанія: %s)",
+                contact.getName(), contact.getRole().name(), companyName);
+
         contactRepository.save(contact);
     }
 

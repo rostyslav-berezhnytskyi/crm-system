@@ -37,11 +37,11 @@ public class ProjectService {
     private final ContactRepository contactRepository;
     private final CompanyRepository companyRepository;
     private final EntityMapper mapper;
+    private final AuditNotificationService auditService;
 
     @Transactional
     public void createProject(ProjectInputDto dto) {
-        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.info("User '{}' created a new project: '{}'", currentUser, dto.name());
+        auditService.notifyAndLog("Новий проєкт", "Створено проєкт: '%s'", dto.name());
 
         if (projectRepository.existsByName(dto.name())) {
             throw new RuntimeException("Project with this name already exists: " + dto.name());
@@ -60,6 +60,7 @@ public class ProjectService {
     public void updateProject(Long id, ProjectInputDto dto) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
+        auditService.notifyAndLog("Оновлення проєкту", "Внесено зміни у проєкт: '%s' (ID: %s)", project.getName(), id);
 
         if (!project.getName().equals(dto.name()) && projectRepository.existsByName(dto.name())) {
             throw new RuntimeException("Project name already taken: " + dto.name());
@@ -164,6 +165,7 @@ public class ProjectService {
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + id));
         project.setActive(false);
         project.setFinishDate(LocalDateTime.now()); // AUTO-FINISH
+        auditService.notifyAndLog("Закриття проєкту", "Проєкт '%s' (ID: %d) закрито", project.getName(), id);
         projectRepository.save(project);
     }
 
@@ -174,21 +176,14 @@ public class ProjectService {
                 .orElseThrow(() -> new RuntimeException("Cannot delete. Project not found: " + id));
 
         // 2. Check business rules
-        if (transactionRepository.existsByProjectId(id)) {
+        if (transactionRepository.existsByProjectId(id) && !project.isActive()) {
             throw new RuntimeException("Cannot delete project! It has associated transactions. Please 'Close' it instead to preserve financial history.");
         }
 
         // 3. Log the valuable info
-        String currentUser = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
-        log.warn("CRITICAL: User '{}' PERMANENTLY DELETED project: '{}' (ID: {})", currentUser, project.getName(), id);
+        auditService.notifyCriticalAlert("ПОВНІСТЮ ВИДАЛЕНО ПРОЄКТ: '%s' (ID: %s)", project.getName(), id);
 
-
-        if (!projectRepository.existsById(id)) {
-            throw new RuntimeException("Cannot delete. Project not found: " + id);
-        }
-        if (transactionRepository.existsByProjectId(id)) {
-            throw new RuntimeException("Cannot delete project! It has associated transactions. Please 'Close' it instead to preserve financial history.");
-        }
+        // 4. Perform deletion
         projectRepository.deleteById(id);
     }
 

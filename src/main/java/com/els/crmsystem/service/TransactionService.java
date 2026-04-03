@@ -41,6 +41,7 @@ public class TransactionService {
     private final CompanyRepository companyRepository;
     private final ContactRepository contactRepository;
     private final EntityMapper mapper;
+    private final AuditNotificationService auditService;
 
     /**
      * Creates a new transaction with optional file attachments.
@@ -49,8 +50,8 @@ public class TransactionService {
      */
     @Transactional
     public void createTransaction(TransactionInputDto dto, String username) {
-        log.info("User '{}' is creating a {} transaction of {} UAH for Project ID: {}",
-                username, dto.type(), dto.amount(), dto.projectId());
+        auditService.notifyAndLog("Створення транзакції", "Тип: %s, Сума: %s ₴, Проєкт ID: %s",
+                dto.type(), dto.amount(), dto.projectId());
 
         // 1. Fetch User (Who is creating this transaction)
         User user = userRepository.findByUsername(username)
@@ -108,14 +109,15 @@ public class TransactionService {
 
     @Transactional
     public void updateTransaction(Long id, TransactionInputDto dto, String username) {
-        log.info("User '{}' is UPDATING transaction ID: {}", username, id);
-
         // 1. Find the existing transaction
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + id));
 
         // Security Check: If not Admin, ensure the user OWNS this transaction
         // (You can add this check if you want strict security, or rely on the Controller)
+
+        auditService.notifyAndLog("Оновлення транзакції", "Проєкт: '%s' (ID: %s). Нова сума: %s ₴, Категорія: %s",
+                transaction.getProject().getName(), id, dto.amount(), dto.category().getUkrainianName());
 
         // 2. Update Simple Fields
         Project project = projectRepository.findById(dto.projectId())
@@ -212,16 +214,9 @@ public class TransactionService {
         Transaction txn = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found: " + id));
 
-        // 2. Grab the user
-        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        auditService.notifyCriticalAlert("Видалено транзакцію! Тип: %s, Сума: %s ₴, Категорія: %s, Проєкт: %s",
+                txn.getType().getUkrainianName(), txn.getAmount(), txn.getCategory().getUkrainianName(), txn.getProject().getName());
 
-        // 3. Log the ACTUAL valuable information
-        log.warn("SECURITY: User '{}' DELETED transaction ID: {} [Type: {}, Amount: {} ₴, Category: '{}', Project: '{}']",
-                currentUser, id, txn.getType(), txn.getAmount(), txn.getCategory().getUkrainianName(), txn.getProject().getName());
-
-        if (!transactionRepository.existsById(id)) {
-            throw new RuntimeException("Transaction not found: " + id);
-        }
         // Optional: In the future, you might want to delete the actual files from disk here too.
         transactionRepository.deleteById(id);
     }

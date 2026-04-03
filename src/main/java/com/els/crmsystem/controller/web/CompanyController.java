@@ -32,6 +32,7 @@ public class CompanyController {
     private final TransactionService transactionService;
     private final ExcelExportService excelExportService;
     private final FinanceService financeService;
+    private final AuditNotificationService auditService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -150,8 +151,7 @@ public class CompanyController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) CompanyRole role) {
 
-        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.warn("SECURITY AUDIT: User '{}' downloaded the COMPANIES Excel Database.", currentUser);
+        auditService.notifyAndLog("Експорт БД", "Завантажено Excel-файл КОМПАНІЙ");
 
         List<CompanyOutputDto> allFiltered = companyService.getAllFilteredCompanies(name, role);
         byte[] excelData = excelExportService.exportCompaniesToExcel(allFiltered);
