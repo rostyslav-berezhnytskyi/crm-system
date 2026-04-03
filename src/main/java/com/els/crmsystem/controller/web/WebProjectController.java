@@ -2,6 +2,7 @@ package com.els.crmsystem.controller.web;
 
 import com.els.crmsystem.dto.input.EquipmentInputDto;
 import com.els.crmsystem.dto.input.ProjectInputDto;
+import com.els.crmsystem.dto.output.ProjectMediaOutputDto;
 import com.els.crmsystem.enums.PaymentMethod;
 import com.els.crmsystem.enums.TransactionCategory;
 import com.els.crmsystem.enums.TransactionType;
@@ -9,9 +10,14 @@ import com.els.crmsystem.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -46,9 +52,28 @@ public class WebProjectController {
     // View Project Profile (Command Center)
     @GetMapping("/projects/{id}")
     public String viewProject(@PathVariable Long id, Model model) {
-        // Load core project and gallery
+        // Load core project details
         model.addAttribute("project", projectService.getProjectById(id));
-        model.addAttribute("gallery", mediaService.getGalleryForProject(id));
+
+        // Load media and process it in the controller
+        List<ProjectMediaOutputDto> gallery = mediaService.getGalleryForProject(id);
+
+        // 1. Separate Photos from Documents
+        List<ProjectMediaOutputDto> photos = gallery.stream()
+                .filter(media -> media.fileType() != null && media.fileType().startsWith("image/"))
+                .collect(Collectors.toList());
+
+        // 2. Group Documents by Folder Name
+        Map<String, List<ProjectMediaOutputDto>> docsByFolder = gallery.stream()
+                .filter(media -> media.fileType() == null || !media.fileType().startsWith("image/"))
+                .collect(Collectors.groupingBy(
+                        // If folderName is null or blank, group it under "Загальні документи"
+                        media -> StringUtils.hasText(media.folderName()) ? media.folderName() : "Загальні документи"
+                ));
+
+        model.addAttribute("photos", photos);
+        model.addAttribute("docsByFolder", docsByFolder);
+        model.addAttribute("gallery", gallery); // Keep original gallery for total count if needed
 
         var transactions = transactionService.getTransactionsByProjectId(id);
         model.addAttribute("transactions", transactions);
@@ -182,13 +207,14 @@ public class WebProjectController {
     @PostMapping("/projects/{id}/media")
     public String uploadMedia(@PathVariable Long id,
                               @RequestParam("files") java.util.List<MultipartFile> files, // <--- Now expects a List!
-                              @RequestParam(value = "description", required = false) String description) {
+                              @RequestParam(value = "description", required = false) String description,
+                              @RequestParam(value = "folderName", required = false) String folderName) { // <-- ADDED FOLDERNAME
 
         // Loop through every file the user selected
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
                 // We reuse your exact same service method for each file!
-                mediaService.uploadMedia(id, file, description);
+                mediaService.uploadMedia(id, file, description, folderName); // <-- PASS FOLDERNAME
             }
         }
 

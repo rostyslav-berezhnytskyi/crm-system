@@ -7,6 +7,7 @@ import com.els.crmsystem.dto.output.*;
 import com.els.crmsystem.entity.*;
 import com.els.crmsystem.enums.Role;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class EntityMapper {
@@ -108,10 +109,6 @@ public class EntityMapper {
     // TRANSACTION MAPPINGS
     // ==========================================
 
-    // ==========================================
-    // TRANSACTION MAPPINGS
-    // ==========================================
-
     public TransactionOutputDto toOutputDto(Transaction transaction) {
         if (transaction == null) return null;
 
@@ -121,10 +118,10 @@ public class EntityMapper {
 
         if (transaction.getSellerCompany() != null) {
             sellerName = "🏢 " + transaction.getSellerCompany().getName();
-            sellerUrl = "/companies/" + transaction.getSellerCompany().getId(); // <--- ЗМІНА ТУТ
+            sellerUrl = "/companies/" + transaction.getSellerCompany().getId();
         } else if (transaction.getSellerContact() != null) {
             sellerName = "👤 " + transaction.getSellerContact().getName();
-            sellerUrl = "/contacts/" + transaction.getSellerContact().getId(); // <--- ЗМІНА ТУТ
+            sellerUrl = "/contacts/" + transaction.getSellerContact().getId();
         }
 
         return new TransactionOutputDto(
@@ -217,10 +214,17 @@ public class EntityMapper {
     public ProjectMediaOutputDto toOutputDto(com.els.crmsystem.entity.ProjectMedia media) {
         if (media == null) return null;
 
+        String fileName = null;
+        if (StringUtils.hasText(media.getFileUrl())) {
+            fileName = StringUtils.unqualify(media.getFileUrl().replace("\\", "/"));
+        }
+
         return new ProjectMediaOutputDto(
                 media.getId(),
                 media.getFileUrl(),
+                fileName,
                 media.getFileType(),
+                media.getFolderName(),
                 media.getDescription(),
                 media.getUploadedAt()
         );

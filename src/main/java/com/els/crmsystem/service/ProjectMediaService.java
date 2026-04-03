@@ -24,14 +24,14 @@ public class ProjectMediaService {
     private final EntityMapper mapper;
 
     @Transactional
-    public void uploadMedia(Long projectId, MultipartFile file, String description) {
+    public void uploadMedia(Long projectId, MultipartFile file, String description, String folderName) { // ADDED FOLDERNAME
         // 1. Find the project
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
 
         // 2. Save the physical file using your smart subfolder trick
-        String folderName = "projects/" + projectId;
-        String savedFilePath = fileStorageService.saveFileToSubfolder(file, folderName);
+        String subFolderName = "projects/" + projectId;
+        String savedFilePath = fileStorageService.saveFileToSubfolder(file, subFolderName);
 
         // 3. Create the database record
         ProjectMedia media = new ProjectMedia();
@@ -39,6 +39,7 @@ public class ProjectMediaService {
         media.setFileUrl(savedFilePath);
         media.setFileType(file.getContentType()); // Grabs "image/jpeg" or "video/mp4" automatically
         media.setDescription(description != null ? description : "");
+        media.setFolderName(folderName); // SET THE FOLDERNAME
 
         mediaRepository.save(media);
     }

@@ -23,8 +23,12 @@ public class ProjectMedia {
     @Column(name = "file_url", nullable = false)
     private String fileUrl;
 
-    @Column(name = "file_type", length = 50)
+    @Column(name = "file_type", length = 255)
     private String fileType; // e.g., "IMAGE", "VIDEO"
+
+    // Virtual folder for documents
+    @Column(name = "folder_name", length = 255)
+    private String folderName;
 
     @Column(length = 1000)
     private String description;

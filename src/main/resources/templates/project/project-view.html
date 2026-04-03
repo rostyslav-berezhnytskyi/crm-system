@@ -1,7 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 
-<head th:replace="~{fragments :: head('ELS CRM - Профіль проєкту')}"></head>
+<head th:replace="~{fragments :: head('ELS CRM - Профіль проєкту')}">
+    <style>
+        .gallery-item .btn-danger {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .gallery-item:hover .btn-danger {
+            opacity: 1;
+        }
+    </style>
+</head>
 
 <body class="bg-light">
 
@@ -244,55 +254,97 @@
                 </div>
                 <div class="card-body p-4">
 
-                    <form th:action="@{/projects/{id}/media(id=${project.id()})}" method="post" enctype="multipart/form-data" class="bg-white p-3 rounded border shadow-sm mb-4">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-12 col-md-5">
-                                <input type="file" name="files" class="form-control" accept="image/*,.pdf,.xls,.xlsx,.doc,.docx" multiple required>
+                    <!-- VIRTUAL FOLDER UPLOAD FORM -->
+                    <form th:action="@{/projects/{id}/media(id=${project.id()})}" method="post" enctype="multipart/form-data" class="bg-light p-3 rounded border border-dashed mb-4">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-12 col-lg-4">
+                                <label for="files" class="form-label small text-muted fw-bold">1. Виберіть файли</label>
+                                <input type="file" name="files" id="files" class="form-control" accept="image/*,.pdf,.xls,.xlsx,.doc,.docx" multiple required>
                             </div>
-                            <div class="col-12 col-md-4">
-                                <input type="text" name="description" class="form-control" placeholder="Опис (Необов'язково)">
+                            <div class="col-12 col-lg-3">
+                                <label for="folderName" class="form-label small text-muted fw-bold">2. Вкажіть папку (для документів)</label>
+                                <input type="text" name="folderName" id="folderName" class="form-control" list="folderSuggestions" placeholder="Напр. Договори">
+                                <datalist id="folderSuggestions">
+                                    <option value="Рахунки"></option>
+                                    <option value="Договори"></option>
+                                    <option value="Комерційні пропозиції"></option>
+                                    <option value="Технічна документація"></option>
+                                    <option value="Акти виконаних робіт"></option>
+                                </datalist>
                             </div>
-                            <div class="col-12 col-md-3 mt-2 mt-md-0">
+                            <div class="col-12 col-lg-3">
+                                <label for="description" class="form-label small text-muted fw-bold">3. Додайте опис</label>
+                                <input type="text" name="description" id="description" class="form-control" placeholder="Необов'язково">
+                            </div>
+                            <div class="col-12 col-lg-2">
                                 <button type="submit" class="btn btn-success w-100 fw-bold"><i class="bi bi-upload me-1"></i> Завантажити</button>
                             </div>
                         </div>
                     </form>
 
+                    <!-- Handle case where everything is empty -->
                     <div th:if="${#lists.isEmpty(gallery)}" class="text-center text-muted py-5 bg-light rounded border border-dashed">
                         <i class="bi bi-images fs-1 text-secondary opacity-50"></i>
                         <p class="mt-2 mb-0">Ще немає завантажених фотографій або документів.</p>
                     </div>
 
-                    <div class="list-group shadow-sm" style="max-height: 500px; overflow-y: auto;">
-                        <div th:each="media : ${gallery}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
-                            <div class="d-flex align-items-center overflow-hidden w-100 pe-3">
-
-                                <a th:href="@{'/uploads/' + ${media.fileUrl()}}" target="_blank" class="flex-shrink-0 text-decoration-none">
-                                    <img th:if="${media.fileType() != null and #strings.startsWith(media.fileType(), 'image/')}"
-                                         th:src="@{'/uploads/' + ${media.fileUrl()}}"
-                                         class="rounded shadow-sm me-3 border"
-                                         style="width: 55px; height: 55px; object-fit: cover;" alt="Preview">
-
-                                    <div th:unless="${media.fileType() != null and #strings.startsWith(media.fileType(), 'image/')}"
-                                         class="bg-light rounded shadow-sm border me-3 d-flex align-items-center justify-content-center"
-                                         style="width: 55px; height: 55px;">
-                                        <i class="bi bi-filetype-pdf text-danger fs-3" th:if="${media.fileType() != null and #strings.contains(media.fileType(), 'pdf')}"></i>
-                                        <i class="bi bi-file-earmark-spreadsheet text-success fs-3" th:if="${media.fileType() != null and (#strings.contains(media.fileType(), 'xls') or #strings.contains(media.fileType(), 'sheet'))}"></i>
-                                        <i class="bi bi-file-earmark-text text-primary fs-3" th:unless="${media.fileType() != null and (#strings.contains(media.fileType(), 'pdf') or #strings.contains(media.fileType(), 'xls') or #strings.contains(media.fileType(), 'sheet'))}"></i>
+                    <!-- A. PHOTOS SECTION -->
+                    <div th:if="${not #lists.isEmpty(photos)}">
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-camera-fill me-2"></i>Фотографії</h5>
+                        <div class="row g-3">
+                            <div th:each="photo : ${photos}" class="col-6 col-md-4 col-lg-3">
+                                <div class="card h-100 shadow-sm border-light text-decoration-none position-relative gallery-item">
+                                    <a th:href="@{'/uploads/' + ${photo.fileUrl()}}" target="_blank" class="stretched-link">
+                                        <img th:src="@{'/uploads/' + ${photo.fileUrl()}}" class="card-img-top" style="height: 180px; object-fit: cover;" alt="Photo">
+                                    </a>
+                                    <div class="card-body p-2" th:if="${photo.description() != null and !photo.description().isEmpty()}">
+                                        <p class="card-text small text-muted text-truncate" th:text="${photo.description()}"></p>
                                     </div>
-                                </a>
-
-                                <div class="text-truncate">
-                                    <span class="fw-bold text-dark d-block text-truncate mb-1" th:text="${media.description() != null and !media.description().isEmpty() ? media.description() : 'Документ / Фото'}"></span>
-                                    <small class="text-muted"><i class="bi bi-clock me-1"></i><span th:text="${#temporals.format(media.uploadedAt(), 'dd-MM-yy HH:mm')}"></span></small>
+                                    <!-- Delete Button -->
+                                    <form th:action="@{/projects/media/{mediaId}/delete(mediaId=${photo.id})}" method="post" onsubmit="return confirm('Видалити цей файл?');" class="position-absolute top-0 end-0 p-1" style="z-index: 2;">
+                                        <input type="hidden" name="projectId" th:value="${project.id()}">
+                                        <button type="submit" class="btn btn-sm btn-danger rounded-circle" style="width: 30px; height: 30px; line-height: 1.5;" title="Видалити"><i class="bi bi-x-lg"></i></button>
+                                    </form>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="d-flex flex-shrink-0">
-                                <form th:action="@{/projects/media/{mediaId}/delete(mediaId=${media.id()})}" method="post" onsubmit="return confirm('Видалити цей файл?');">
-                                    <input type="hidden" name="projectId" th:value="${project.id()}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Видалити"><i class="bi bi-trash fs-5"></i></button>
-                                </form>
+                    <!-- B. DOCUMENTS SECTION -->
+                    <div th:if="${not #maps.isEmpty(docsByFolder)}" class="mt-4">
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-file-earmark-text-fill me-2"></i>Документи</h5>
+
+                        <!-- Loop through the pre-grouped map from the controller -->
+                        <div th:each="folderEntry : ${docsByFolder}" class="mb-4">
+                            <h6 class="fw-bold text-primary bg-primary bg-opacity-10 border-start border-primary border-4 ps-2 py-1 rounded-end">
+                                <i class="bi bi-folder2-open me-1"></i>
+                                <span th:text="${folderEntry.key}"></span>
+                            </h6>
+
+                            <div class="list-group shadow-sm">
+                                <div th:each="doc : ${folderEntry.value}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-2">
+                                    <div class="d-flex align-items-center overflow-hidden w-100 pe-3">
+                                        <!-- Icon -->
+                                        <a th:href="@{'/uploads/' + ${doc.fileUrl()}}" target="_blank" class="flex-shrink-0 text-decoration-none">
+                                            <div class="bg-light rounded shadow-sm border me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                                <i class="bi bi-filetype-pdf text-danger fs-4" th:if="${doc.fileType() != null and #strings.contains(doc.fileType(), 'pdf')}"></i>
+                                                <i class="bi bi-file-earmark-spreadsheet text-success fs-4" th:if="${doc.fileType() != null and (#strings.contains(doc.fileType(), 'xls') or #strings.contains(doc.fileType(), 'sheet'))}"></i>
+                                                <i class="bi bi-file-earmark-word text-primary fs-4" th:if="${doc.fileType() != null and (#strings.contains(doc.fileType(), 'doc') or #strings.contains(doc.fileType(), 'word'))}"></i>
+                                                <i class="bi bi-file-earmark-text fs-4 text-secondary" th:if="${doc.fileType() == null or not (#strings.contains(doc.fileType(), 'pdf') or #strings.contains(doc.fileType(), 'xls') or #strings.contains(doc.fileType(), 'sheet') or #strings.contains(doc.fileType(), 'doc') or #strings.contains(doc.fileType(), 'word'))}"></i>
+                                            </div>
+                                        </a>
+                                        <!-- Info -->
+                                        <div class="text-truncate">
+                                            <a th:href="@{'/uploads/' + ${doc.fileUrl()}}" target="_blank" class="fw-bold text-dark d-block text-truncate text-decoration-none" th:text="${!#strings.isEmpty(doc.description()) ? doc.description() : doc.fileName()}"></a>
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i><span th:text="${#temporals.format(doc.uploadedAt(), 'dd-MM-yy HH:mm')}"></span></small>
+                                        </div>
+                                    </div>
+                                    <!-- Delete Button -->
+                                    <form th:action="@{/projects/media/{mediaId}/delete(mediaId=${doc.id})}" method="post" onsubmit="return confirm('Видалити цей файл?');" class="flex-shrink-0">
+                                        <input type="hidden" name="projectId" th:value="${project.id()}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Видалити"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
