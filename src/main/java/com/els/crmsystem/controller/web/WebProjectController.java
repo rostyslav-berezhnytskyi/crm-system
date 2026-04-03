@@ -58,14 +58,15 @@ public class WebProjectController {
         // Load media and process it in the controller
         List<ProjectMediaOutputDto> gallery = mediaService.getGalleryForProject(id);
 
-        // 1. Separate Photos from Documents
+// 1. Separate Photos AND Videos from Documents
         List<ProjectMediaOutputDto> photos = gallery.stream()
-                .filter(media -> media.fileType() != null && media.fileType().startsWith("image/"))
+                .filter(media -> media.fileType() != null && (media.fileType().startsWith("image/") || media.fileType().startsWith("video/")))
                 .collect(Collectors.toList());
 
-        // 2. Group Documents by Folder Name
+        // 2. Group Documents by Folder Name (Exclude Images AND Videos)
         Map<String, List<ProjectMediaOutputDto>> docsByFolder = gallery.stream()
-                .filter(media -> media.fileType() == null || !media.fileType().startsWith("image/"))
+                .filter(media -> media.fileType() == null ||
+                        (!media.fileType().startsWith("image/") && !media.fileType().startsWith("video/")))
                 .collect(Collectors.groupingBy(
                         // If folderName is null or blank, group it under "Загальні документи"
                         media -> StringUtils.hasText(media.folderName()) ? media.folderName() : "Загальні документи"
