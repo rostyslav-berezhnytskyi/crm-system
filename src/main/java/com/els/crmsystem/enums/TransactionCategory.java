@@ -88,6 +88,13 @@ public enum TransactionCategory {
             "Оренда, кава, папір, інтернет"
     ),
 
+    MARKETING(
+            TransactionType.EXPENSE,
+            "Marketing & Ads",
+            "Реклама та Маркетинг",
+            "Wix, Prom, OLX, купівля баз даних, таргетинг"
+    ),
+
     BANK_FEE(
             TransactionType.EXPENSE,
             "Bank Fees",
