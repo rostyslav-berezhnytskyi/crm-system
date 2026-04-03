@@ -149,47 +149,47 @@
         const categorySelect = document.getElementById('categorySelect');
         const counterpartySelect = document.getElementById('counterpartySelect');
 
+        // 1. Create "Master Copies" of all options when the page first loads.
+        // cloneNode(true) copies the HTML elements exactly as Thymeleaf rendered them from the server.
+        const masterCategories = Array.from(categorySelect.cloneNode(true).children);
+        const masterCounterparties = Array.from(counterpartySelect.cloneNode(true).children);
+
+        function updateDropdown(selectElement, masterItems, selectedType) {
+            // Save the currently selected value before we wipe the dropdown
+            const currentValue = selectElement.value;
+
+            // 2. Completely wipe out the actual dropdown on the screen
+            selectElement.innerHTML = '';
+
+            // 3. Rebuild it using only the items from the Master Copy that match the type
+            const targetClass = selectedType === 'INCOME' ? 'opt-income' : 'opt-expense';
+
+            masterItems.forEach(item => {
+                // If it's a placeholder (no opt- class) OR it matches the correct type, add it back
+                if (!item.className.includes('opt-') || item.classList.contains(targetClass)) {
+                    selectElement.appendChild(item.cloneNode(true));
+                }
+            });
+
+            // 4. Try to re-apply the value the user or server originally had selected
+            selectElement.value = currentValue;
+
+            // If the old value doesn't exist anymore (e.g. they switched Income to Expense), reset to placeholder
+            if (selectElement.selectedIndex === -1) {
+                selectElement.value = '';
+            }
+        }
+
         function toggleDynamicFields() {
-            const selectedType = typeSelect.value; // 'INCOME' or 'EXPENSE'
-
-            // 1. Filter Categories
-            Array.from(categorySelect.querySelectorAll('option')).forEach(opt => {
-                if (opt.value === "") return; // Always keep the placeholder
-                if ((selectedType === 'INCOME' && opt.classList.contains('opt-income')) ||
-                    (selectedType === 'EXPENSE' && opt.classList.contains('opt-expense'))) {
-                    opt.style.display = '';
-                    opt.disabled = false;
-                } else {
-                    opt.style.display = 'none';
-                    opt.disabled = true;
-                }
-            });
-
-            // 2. Filter Counterparties (Hide/Show the whole optgroup)
-            Array.from(counterpartySelect.querySelectorAll('optgroup')).forEach(group => {
-                if ((selectedType === 'INCOME' && group.classList.contains('opt-income')) ||
-                    (selectedType === 'EXPENSE' && group.classList.contains('opt-expense'))) {
-                    group.style.display = '';
-                    group.disabled = false;
-                } else {
-                    group.style.display = 'none';
-                    group.disabled = true;
-                }
-            });
-
-            // 3. Reset dropdowns if the currently selected item was just hidden
-            if (categorySelect.options[categorySelect.selectedIndex] && categorySelect.options[categorySelect.selectedIndex].disabled) {
-                categorySelect.value = '';
-            }
-            if (counterpartySelect.options[counterpartySelect.selectedIndex] && counterpartySelect.options[counterpartySelect.selectedIndex].parentNode.disabled) {
-                counterpartySelect.value = '';
-            }
+            const selectedType = typeSelect.value;
+            updateDropdown(categorySelect, masterCategories, selectedType);
+            updateDropdown(counterpartySelect, masterCounterparties, selectedType);
         }
 
         // Run the filter every time the user changes the Type
         typeSelect.addEventListener('change', toggleDynamicFields);
 
-        // Run it once when the page loads (crucial for the "Edit Transaction" page!)
+        // Run it once when the page loads (crucial for the "Edit Transaction" page to load correctly!)
         toggleDynamicFields();
     });
 </script>
