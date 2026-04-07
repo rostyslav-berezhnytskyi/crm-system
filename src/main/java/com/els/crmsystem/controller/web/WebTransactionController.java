@@ -80,6 +80,17 @@ public class WebTransactionController {
         model.addAttribute("totalBalance", financeService.calculateTotalBalance(allFiltered));
         // -------------------------------------------------------------------------------
 
+        // --- NEW: OFFICIAL FINANCES FOR ACCOUNTANT (Respects the page filters!) ---
+        List<TransactionOutputDto> officialFiltered = allFiltered.stream()
+                .filter(t -> t.paymentMethod() == com.els.crmsystem.enums.PaymentMethod.IBAN ||
+                        t.paymentMethod() == com.els.crmsystem.enums.PaymentMethod.CARD_COMPANY)
+                .toList();
+
+        model.addAttribute("officialBalance", financeService.calculateTotalBalance(officialFiltered));
+        model.addAttribute("officialIncome", financeService.calculateTotalIncome(officialFiltered));
+        model.addAttribute("officialExpense", financeService.calculateTotalExpense(officialFiltered));
+        // -------------------------------------------------------------------------------
+
         // 2. Ask the Service for the Filtered & Sorted Page
         Page<TransactionOutputDto> transactionPage = transactionService.getFilteredAndSortedTransactions(
                 projectId, type, category, null, startDateTime, endDateTime, companyId, contactId, page, size, sortField, sortDir, description);
