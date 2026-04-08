@@ -135,26 +135,32 @@ public class WebTransactionController {
     @PostMapping("/transactions")
     public String createTransaction(@Valid @ModelAttribute("transaction") TransactionInputDto dto,
                                     BindingResult bindingResult,
+                                    @RequestParam(defaultValue = "false") boolean forceSave,
                                     Model model,
                                     Principal principal) {
 
-        // If validation fails (e.g., negative amount), reload the page with errors
         if (bindingResult.hasErrors()) {
-            prepareDropdownData(model); // Must reload dropdowns or the page crashes!
-            return "transaction-form";
+            prepareDropdownData(model);
+            return "transaction/transaction-form";
+        }
+
+        // --- NEW: THE SOFT DUPLICATE WARNING ---
+        // We check the separate boolean flag!
+        if (!forceSave) {
+            if (transactionService.isPotentialDuplicate(dto)) {
+                model.addAttribute("duplicateWarning", "Увага! Схожа транзакція (такий самий проєкт, сума та день) вже існує. Якщо це не помилка, поставте галочку нижче та натисніть зберегти ще раз.");
+                prepareDropdownData(model);
+                return "transaction/transaction-form";
+            }
         }
 
         try {
-            // Get the currently logged-in user's username
-            String username = principal.getName();
-
-            transactionService.createTransaction(dto, username);
+            transactionService.createTransaction(dto, principal.getName());
             return "redirect:/transactions?success";
-
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
             prepareDropdownData(model);
-            return "transaction-form";
+            return "transaction/transaction-form";
         }
     }
 

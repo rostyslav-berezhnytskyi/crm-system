@@ -90,7 +90,8 @@
 
                             <div class="col-12 mb-2">
                                 <label class="form-label fw-bold text-muted small">Дата (Залиште порожнім для СЬОГОДНІ)</label>
-                                <input type="datetime-local" th:field="*{date}" class="form-control">
+                                <input type="datetime-local" name="date" class="form-control"
+                                       th:value="${transaction.date != null ? #temporals.format(transaction.date, 'yyyy-MM-dd''T''HH:mm') : ''}">
                             </div>
 
                             <div class="col-12">
@@ -127,7 +128,19 @@
 
                         </div>
 
-                        <div class="d-flex flex-column flex-sm-row justify-content-between mt-5 gap-3">
+                        <div th:if="${duplicateWarning}" class="alert alert-warning mt-4 mb-4 shadow-sm border-warning border-2">
+                            <h5 class="alert-heading text-dark fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Можливий дублікат!</h5>
+                            <p class="text-dark mb-3" th:text="${duplicateWarning}"></p>
+
+                            <div class="form-check bg-white p-3 rounded border">
+                                <input class="form-check-input ms-1" type="checkbox" name="forceSave" value="true" id="forceSaveCheck" style="transform: scale(1.3);">
+                                <label class="form-check-label fw-bold text-danger ms-2" for="forceSaveCheck">
+                                    Я підтверджую, що це НОВА унікальна транзакція. Зберегти все одно.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row justify-content-between mt-2 gap-3">
                             <a href="/transactions" class="btn btn-secondary px-4 w-100 w-sm-auto shadow-sm">Скасувати</a>
                             <button type="submit" class="btn px-5 fw-bold w-100 w-sm-auto shadow-sm" th:classappend="${transactionId == null ? 'btn-primary' : 'btn-warning'}">
                                 <span th:text="${transactionId == null ? 'Зберегти транзакцію' : 'Оновити транзакцію'}"></span>

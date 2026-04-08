@@ -295,4 +295,16 @@ public class TransactionService {
                 .map(mapper::toOutputDto)
                 .collect(Collectors.toList());
     }
+
+    // --- SMART DUPLICATE DETECTOR ---
+    public boolean isPotentialDuplicate(TransactionInputDto dto) {
+        LocalDateTime targetDate = dto.date() != null ? dto.date() : LocalDateTime.now();
+
+        LocalDateTime startOfDay = targetDate.toLocalDate().atStartOfDay();
+        LocalDateTime endOfDay = targetDate.toLocalDate().atTime(23, 59, 59);
+
+        return transactionRepository.existsByProjectIdAndTypeAndCategoryAndAmountAndDateBetween(
+                dto.projectId(), dto.type(), dto.category(), dto.amount(), startOfDay, endOfDay
+        );
+    }
 }
