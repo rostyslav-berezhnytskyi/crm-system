@@ -138,7 +138,44 @@
                 });
             });
         });
+
+        // UNIVERSAL DELETE FUNCTION
+        function confirmDelete(actionUrl, entityName) {
+            // 1. Change the form's target URL to the specific item being deleted
+            document.getElementById('universalDeleteForm').action = actionUrl;
+
+            // 2. Update the text to be specific (e.g. "цю транзакцію" vs "цей проєкт")
+            document.getElementById('deleteModalMessage').innerText = `Ви впевнені, що хочете видалити ${entityName}?`;
+
+            // 3. Show the beautiful modal
+            var myModal = new bootstrap.Modal(document.getElementById('universalDeleteModal'));
+            myModal.show();
+        }
     </script>
+
+</div>
+
+<div th:fragment="deleteModal" class="modal fade" id="universalDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Підтвердження видалення</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="fs-5 mb-1" id="deleteModalMessage">Ви впевнені, що хочете видалити цей запис?</p>
+                <p class="text-muted small mb-0">Цю дію неможливо скасувати.</p>
+            </div>
+            <div class="modal-footer bg-light justify-content-center border-0 gap-3">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Скасувати</button>
+                <form id="universalDeleteForm" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">Так, видалити</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 </body>

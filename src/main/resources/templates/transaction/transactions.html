@@ -233,10 +233,15 @@
 
                     <td class="text-center">
                         <div class="btn-group">
-                            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" th:href="@{/transactions/edit/{id}(id=${t.id})}" class="btn btn-sm btn-outline-primary border-0" title="Редагувати"><i class="bi bi-pencil-square fs-5"></i></a>
-                            <form th:if="${#authorization.expression('hasRole(''ADMIN'')')}" th:action="@{/transactions/delete/{id}(id=${t.id})}" method="post" onsubmit="return confirm('Видалити цю транзакцію?');" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Видалити"><i class="bi bi-x-square fs-5"></i></button>
-                            </form>
+                            <a th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''DIRECTOR'')')}" th:href="@{/transactions/edit/{id}(id=${t.id})}" class="btn btn-sm btn-outline-primary border-0" title="Редагувати"><i class="bi bi-pencil-square fs-5"></i></a>
+
+                            <button th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''DIRECTOR'')')}"
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger border-0"
+                                    title="Видалити"
+                                    th:onclick="|confirmDelete('/transactions/delete/${t.id}', 'цю транзакцію')|">
+                                <i class="bi bi-x-square fs-5"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -285,7 +290,15 @@
                         <div class="btn-group">
                             <a th:if="${t.receiptUrl}" th:href="@{'/uploads/' + ${t.receiptUrl}}" target="_blank" class="btn btn-sm btn-outline-secondary border-0"><i class="bi bi-file-earmark-text fs-5"></i></a>
                             <a th:if="${t.itemImageUrl}" th:href="@{'/uploads/' + ${t.itemImageUrl}}" target="_blank" class="btn btn-sm btn-outline-info border-0"><i class="bi bi-camera fs-5"></i></a>
-                            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" th:href="@{/transactions/edit/{id}(id=${t.id})}" class="btn btn-sm btn-outline-primary border-0"><i class="bi bi-pencil-square fs-5"></i></a>
+
+                            <a th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''DIRECTOR'')')}" th:href="@{/transactions/edit/{id}(id=${t.id})}" class="btn btn-sm btn-outline-primary border-0"><i class="bi bi-pencil-square fs-5"></i></a>
+
+                            <button th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''DIRECTOR'')')}"
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger border-0"
+                                    th:onclick="|confirmDelete('/transactions/delete/${t.id}', 'цю транзакцію')|">
+                                <i class="bi bi-x-square fs-5"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -326,6 +339,8 @@
         </div>
     </div>
 </div>
+
+<div th:replace="~{fragments :: deleteModal}"></div>
 
 <div th:replace="~{fragments :: scripts}"></div>
 <script>
