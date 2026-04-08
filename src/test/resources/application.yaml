@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: crmsystem-test
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=USER
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop          # Hibernate generates schema from entities; no Flyway needed
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+
+  flyway:
+    enabled: false                   # Flyway scripts are PostgreSQL-specific; skip entirely
+
+  thymeleaf:
+    enabled: false                   # No web layer in these tests
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# Required by SecurityConfig (@Value)
+security:
+  remember-me:
+    key: test-secret-key-for-integration-tests
+
+# Required by AuditNotificationService (@Value) — bean is @MockBean so values are never used,
+# but Spring property binding still validates them at context startup.
+telegram:
+  bot:
+    token: fake-test-token
+    chat-id: fake-test-chat-id
+
+# Required by FileStorageService (@Value) — bean is @MockBean, same reason as above.
+els:
+  upload-dir: /tmp/els-test-uploads
+
+logging:
+  level:
+    root: WARN
+    com.els.crmsystem: INFO
+    org.springframework.security: WARN
