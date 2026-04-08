@@ -118,6 +118,14 @@
                     </select>
                 </div>
 
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-muted small fw-bold mb-1">Оплата</label>
+                    <select name="paymentMethod" class="form-select form-select-sm">
+                        <option value="">Всі способи</option>
+                        <option th:each="m : ${paymentMethods}" th:value="${m}" th:text="${m.ukrainianName}" th:selected="${m == currentPaymentMethod}"></option>
+                    </select>
+                </div>
+
                 <div class="col-12 col-md-3">
                     <label class="form-label text-muted small fw-bold mb-1">Контрагент</label>
                     <select name="sellerValue" class="form-select form-select-sm" id="filterCounterpartySelect">
