@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,9 +51,6 @@ public class TransactionService {
      */
     @Transactional
     public void createTransaction(TransactionInputDto dto, String username) {
-        auditService.notifyAndLog("Створення транзакції", "Тип: %s, Сума: %s ₴, Проєкт ID: %s",
-                dto.type(), dto.amount(), dto.projectId());
-
         // 1. Fetch User (Who is creating this transaction)
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
@@ -60,6 +58,10 @@ public class TransactionService {
         // 2. Fetch Project (What project its connected)
         Project project = projectRepository.findById(dto.projectId())
                 .orElseThrow(() -> new RuntimeException("Project not found with ID: " + dto.projectId()));
+
+        // --- DETAILED TELEGRAM NOTIFICATION ---
+        String details = buildTransactionDetails(project, dto.type(), dto.category(), dto.amount(), dto.date(), dto.description());
+        auditService.notifyAndLog("Створення транзакції", "%s", details);
 
         // 3. Handle File Uploads (Save to Disk -> Get String Path)
         // returns null if no file sent
@@ -116,12 +118,13 @@ public class TransactionService {
         // Security Check: If not Admin, ensure the user OWNS this transaction
         // (You can add this check if you want strict security, or rely on the Controller)
 
-        auditService.notifyAndLog("Оновлення транзакції", "Проєкт: '%s' (ID: %s). Нова сума: %s ₴, Категорія: %s",
-                transaction.getProject().getName(), id, dto.amount(), dto.category().getUkrainianName());
-
         // 2. Update Simple Fields
         Project project = projectRepository.findById(dto.projectId())
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        // --- EDIT NOTIFICATION ---
+        String details = buildTransactionDetails(project, dto.type(), dto.category(), dto.amount(), dto.date(), dto.description());
+        auditService.notifyAndLog("Оновлення транзакції", "%s", details);
 
         transaction.setProject(project);
         transaction.setAmount(dto.amount());
@@ -214,8 +217,9 @@ public class TransactionService {
         Transaction txn = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found: " + id));
 
-        auditService.notifyCriticalAlert("Видалено транзакцію! Тип: %s, Сума: %s ₴, Категорія: %s, Проєкт: %s",
-                txn.getType().getUkrainianName(), txn.getAmount(), txn.getCategory().getUkrainianName(), txn.getProject().getName());
+        // --- 🚀 NEW: BEAUTIFUL DELETE NOTIFICATION ---
+        String details = buildTransactionDetails(txn.getProject(), txn.getType(), txn.getCategory(), txn.getAmount(), txn.getDate(), txn.getDescription());
+        auditService.notifyCriticalAlert("Безповоротно видалено транзакцію! %s", details);
 
         // Optional: In the future, you might want to delete the actual files from disk here too.
         transactionRepository.deleteById(id);
@@ -306,5 +310,18 @@ public class TransactionService {
         return transactionRepository.existsByProjectIdAndTypeAndCategoryAndAmountAndDateBetween(
                 dto.projectId(), dto.type(), dto.category(), dto.amount(), startOfDay, endOfDay
         );
+    }
+
+    // --- NOTIFICATION HELPER ---
+    private String buildTransactionDetails(Project project, TransactionType type, TransactionCategory category,
+                                           java.math.BigDecimal amount, LocalDateTime date, String description) {
+        String typeLabel = type.name().equals("INCOME") ? "🟢 Дохід" : "🔴 Витрата";
+        String desc = (description != null && !description.isBlank()) ? description : "—";
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+        String dateStr = date != null ? date.format(formatter) : "Сьогодні / Не вказано";
+
+        return String.format("\n🏢 Проєкт: %s\n💳 Тип: %s\n🏷️ Категорія: %s\n💰 Сума: %s ₴\n📅 Дата: %s\n💬 Опис: %s",
+                project.getName(), typeLabel, category.getUkrainianName(), amount, dateStr, desc);
     }
 }
