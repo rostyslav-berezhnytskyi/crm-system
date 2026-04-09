@@ -53,7 +53,8 @@ public class HomeController {
         model.addAttribute("activeProjects", recentActiveProjects);
 
         // 4b. ALL projects with GPS coordinates for the Map
-        List<ProjectOutputDto> mapProjects = allActiveProjects.stream()
+        List<ProjectOutputDto> allProjects = projectService.getAllProjects();
+        List<ProjectOutputDto> mapProjects = allProjects.stream()
                 .filter(p -> p.latitude() != null && p.longitude() != null)
                 .toList();
         model.addAttribute("mapProjects", mapProjects);
