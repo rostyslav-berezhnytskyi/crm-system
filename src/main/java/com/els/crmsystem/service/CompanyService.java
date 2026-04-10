@@ -131,4 +131,14 @@ public class CompanyService {
                 .map(entityMapper::toOutputDto)
                 .collect(Collectors.toList());
     }
+
+    // 🔭 PIPELINE: fetch only LEAD and PROSPECT companies
+    public List<CompanyOutputDto> getPipelineCompanies() {
+        org.springframework.data.jpa.domain.Specification<Company> spec =
+                com.els.crmsystem.specification.CompanySpecification.filterByPipeline(true);
+        return companyRepository.findAll(spec,
+                org.springframework.data.domain.Sort.by("name").ascending()).stream()
+                .map(entityMapper::toOutputDto)
+                .collect(Collectors.toList());
+    }
 }

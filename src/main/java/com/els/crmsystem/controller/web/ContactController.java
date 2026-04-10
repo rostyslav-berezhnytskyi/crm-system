@@ -5,6 +5,7 @@ import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.dto.output.ContactOutputDto;
 import com.els.crmsystem.enums.ContactRole;
 import com.els.crmsystem.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -37,8 +39,15 @@ public class ContactController {
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
-    public ContactRole[] getContactRoles() {
-        return ContactRole.values();
+    public ContactRole[] getContactRoles(HttpServletRequest request) {
+        // If we are on the Create or Edit forms, show ALL roles so we can add Leads
+        if (request.getRequestURI().contains("/new") || request.getRequestURI().contains("/edit")) {
+            return ContactRole.values();
+        }
+        // If we are on the main list page, hide the Leads from the search filter
+        return Arrays.stream(ContactRole.values())
+                .filter(r -> r != ContactRole.LEAD && r != ContactRole.PROSPECT)
+                .toArray(ContactRole[]::new);
     }
 
     @ModelAttribute("companies")

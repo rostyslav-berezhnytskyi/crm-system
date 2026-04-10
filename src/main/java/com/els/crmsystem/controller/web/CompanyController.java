@@ -4,6 +4,7 @@ import com.els.crmsystem.dto.input.CompanyInputDto;
 import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.enums.CompanyRole;
 import com.els.crmsystem.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -36,8 +38,15 @@ public class CompanyController {
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
-    public CompanyRole[] getCompanyRoles() {
-        return CompanyRole.values();
+    public CompanyRole[] getCompanyRoles(HttpServletRequest request) {
+        // If we are on the Create or Edit forms, show ALL roles so we can add Leads
+        if (request.getRequestURI().contains("/new") || request.getRequestURI().contains("/edit")) {
+            return CompanyRole.values();
+        }
+        // If we are on the main list page, hide the Leads from the search filter
+        return Arrays.stream(CompanyRole.values())
+                .filter(r -> r != CompanyRole.LEAD && r != CompanyRole.PROSPECT)
+                .toArray(CompanyRole[]::new);
     }
 
     // 1. Show the list of all active companies (WITH FILTERING & PAGINATION)

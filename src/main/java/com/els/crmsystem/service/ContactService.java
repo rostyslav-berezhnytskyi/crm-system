@@ -142,4 +142,14 @@ public class ContactService {
                 .map(entityMapper::toOutputDto)
                 .collect(Collectors.toList());
     }
+
+    // 🔭 PIPELINE: fetch only LEAD and PROSPECT contacts
+    public List<ContactOutputDto> getPipelineContacts() {
+        org.springframework.data.jpa.domain.Specification<Contact> spec =
+                com.els.crmsystem.specification.ContactSpecification.filterByPipeline(true);
+        return contactRepository.findAll(spec,
+                org.springframework.data.domain.Sort.by("name").ascending()).stream()
+                .map(entityMapper::toOutputDto)
+                .collect(Collectors.toList());
+    }
 }
