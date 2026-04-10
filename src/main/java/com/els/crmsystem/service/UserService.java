@@ -145,4 +145,11 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    public List<UserOutputDto> findAllActiveUsers() {
+        return userRepository.findAll().stream()
+                .filter(User::isEnabled)
+                .map(mapper::toOutputDto)
+                .collect(Collectors.toList());
+    }
+
 }

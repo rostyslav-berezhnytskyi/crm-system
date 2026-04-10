@@ -26,6 +26,11 @@ public class TaskAttachment {
     @Column(nullable = false)
     private String fileUrl; // Where it is saved on the server
 
-    @Column(name = "uploaded_at", nullable = false)
-    private LocalDateTime uploadedAt = LocalDateTime.now();
+    @Column(name = "uploaded_at", nullable = false, updatable = false)
+    private LocalDateTime uploadedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.uploadedAt = LocalDateTime.now();
+    }
 }

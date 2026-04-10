@@ -1,7 +1,9 @@
 package com.els.crmsystem.service;
 
+import com.els.crmsystem.dto.output.TaskAttachmentOutputDto;
 import com.els.crmsystem.entity.Task;
 import com.els.crmsystem.entity.TaskAttachment;
+import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.TaskAttachmentRepository;
 import com.els.crmsystem.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ public class TaskAttachmentService {
     private final TaskAttachmentRepository attachmentRepository;
     private final TaskRepository taskRepository;
     private final FileStorageService fileStorageService;
+    private final EntityMapper mapper;
 
     @Transactional
     public void uploadAttachment(Long taskId, MultipartFile file) {
@@ -40,9 +43,12 @@ public class TaskAttachmentService {
         attachmentRepository.save(attachment);
     }
 
-    public List<TaskAttachment> getAttachmentsForTask(Long taskId) {
-        // You will need to create this simple method in TaskAttachmentRepository
-        return attachmentRepository.findByTaskId(taskId);
+    // Don't forget to inject EntityMapper mapper; at the top!
+
+    public List<TaskAttachmentOutputDto> getAttachmentsForTask(Long taskId) {
+        return attachmentRepository.findByTaskId(taskId).stream()
+                .map(mapper::toOutputDto)
+                .toList();
     }
 
     @Transactional

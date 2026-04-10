@@ -258,4 +258,58 @@ public class EntityMapper {
                 document.getUploadedAt()
         );
     }
+
+    // ==========================================
+    // TASK ATTACHMENT MAPPINGS
+    // ==========================================
+    public TaskAttachmentOutputDto toOutputDto(TaskAttachment attachment) {
+        return new TaskAttachmentOutputDto(
+                attachment.getId(),
+                attachment.getFileName(),
+                attachment.getFileUrl(),
+                attachment.getUploadedAt()
+        );
+    }
+
+    // ==========================================
+    // TASK MAPPINGS
+    // ==========================================
+    public TaskOutputDto toOutputDto(Task task) {
+        if (task == null) {
+            return null;
+        }
+
+        return new TaskOutputDto(
+                task.getId(),
+                task.getTitle(),
+                task.getDescription(),
+                task.getPriority(),
+                task.getDisplayOrder(),
+                task.getCreatedAt(),
+                task.getDueDate(),
+                task.isCompleted(),
+
+                // Group (Required, but safe to check)
+                task.getGroup() != null ? task.getGroup().getId() : null,
+                task.getGroup() != null ? task.getGroup().getName() : null,
+
+                // Creator (Required)
+                task.getCreator() != null ? task.getCreator().getUsername() : "Система",
+
+                // Assignee (Optional)
+                task.getAssignee() != null ? task.getAssignee().getUsername() : null,
+
+                // Project (Optional)
+                task.getLinkedProject() != null ? task.getLinkedProject().getId() : null,
+                task.getLinkedProject() != null ? task.getLinkedProject().getName() : null,
+
+                // Company (Optional)
+                task.getLinkedCompany() != null ? task.getLinkedCompany().getId() : null,
+                task.getLinkedCompany() != null ? task.getLinkedCompany().getName() : null,
+
+                // Contact (Optional)
+                task.getLinkedContact() != null ? task.getLinkedContact().getId() : null,
+                task.getLinkedContact() != null ? task.getLinkedContact().getName() : null
+        );
+    }
 }
