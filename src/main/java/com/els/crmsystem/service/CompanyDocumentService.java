@@ -48,6 +48,10 @@ public class CompanyDocumentService {
 
     @Transactional
     public void deleteDocument(Long documentId) {
-        documentRepository.deleteById(documentId);
+        CompanyDocument document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found with ID: " + documentId));
+
+        fileStorageService.deleteFile(document.getFileUrl());
+        documentRepository.delete(document);
     }
 }

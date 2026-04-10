@@ -1,9 +1,10 @@
 package com.els.crmsystem.service;
 
+import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils; // Import Spring's utility
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class FileStorageService {
 
@@ -80,51 +82,15 @@ public class FileStorageService {
         }
     }
 
-    /**
-     * Saves a file to /uploads/projects/{projectId}/transactions/
-     * Automatically compresses images to save disk space.
-     */
-    public String saveTransactionFile(MultipartFile file, Long projectId) {
-        if (file == null || file.isEmpty()) {
-            return null;
+    public void deleteFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
+            return;
         }
-
         try {
-            // 1. Create the smart folder path relative to your main upload dir
-            String subfolder = "projects/" + projectId + "/transactions";
-            Path uploadPath = this.fileStorageLocation.resolve(subfolder).normalize();
-
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath); // Creates missing folders automatically
-            }
-
-            // 2. Generate a safe, unique filename
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                    : ".jpg"; // fallback extension
-
-            String uniqueFilename = UUID.randomUUID().toString() + extension;
-            Path filePath = uploadPath.resolve(uniqueFilename);
-
-            // 3. Compress if it's an image, otherwise save normally
-            String contentType = file.getContentType();
-            if (contentType != null && contentType.startsWith("image/")) {
-                // Compress images to 1080p max and 70% JPEG quality
-                Thumbnails.of(file.getInputStream())
-                        .size(1920, 1080)
-                        .outputQuality(0.7)
-                        .toFile(filePath.toFile());
-            } else {
-                // It's a PDF or something else, save it exactly as is
-                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            // 4. Return the relative path to save in the Database
-            return subfolder + "/" + uniqueFilename;
-
+            Path filePath = this.fileStorageLocation.resolve(fileUrl).normalize();
+            Files.deleteIfExists(filePath);
         } catch (IOException e) {
-            throw new RuntimeException("Не вдалося зберегти файл транзакції", e);
+            log.error("Could not delete file: {}", fileUrl, e);
         }
     }
 }

@@ -24,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -77,7 +77,7 @@ class TransactionServiceIntegrationTest {
     @BeforeEach
     void setUp() {
         // FileStorageService: return null so no real file I/O happens
-        when(fileStorageService.saveTransactionFile(any(), anyLong())).thenReturn(null);
+        when(fileStorageService.saveFileToSubfolder(any(), anyString())).thenReturn(null);
 
         testUser = new User();
         testUser.setUsername("integration-test-user");

@@ -55,8 +55,7 @@ public class ProjectMediaService {
         ProjectMedia media = mediaRepository.findById(mediaId)
                 .orElseThrow(() -> new RuntimeException("Media not found"));
 
-        // Note: This deletes the database record.
-        // We can add a method to FileStorageService later to delete the actual file from the Linux drive if we want!
+        fileStorageService.deleteFile(media.getFileUrl());
         mediaRepository.delete(media);
     }
 }

@@ -22,9 +22,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -65,8 +62,9 @@ public class TransactionService {
 
         // 3. Handle File Uploads (Save to Disk -> Get String Path)
         // returns null if no file sent
-        String receiptPath = fileStorageService.saveTransactionFile(dto.receiptFile(), project.getId());
-        String itemImagePath = fileStorageService.saveTransactionFile(dto.itemImageFile(), project.getId());
+        String transactionFolder = "projects/" + project.getId() + "/transactions";
+        String receiptPath = fileStorageService.saveFileToSubfolder(dto.receiptFile(), transactionFolder);
+        String itemImagePath = fileStorageService.saveFileToSubfolder(dto.itemImageFile(), transactionFolder);
 
         // 4. Map DTO -> Entity
         // We do this manually here because we need to inject the found User and Project objects
@@ -140,19 +138,18 @@ public class TransactionService {
         }
 
         // 3. SMART FILE HANDLING
+        String transactionFolder = "projects/" + project.getId() + "/transactions";
 
         // --- Handle Receipt ---
         if (dto.receiptFile() != null && !dto.receiptFile().isEmpty()) {
-            deleteFile(transaction.getReceiptUrl());
-            String newFileName = fileStorageService.saveTransactionFile(dto.receiptFile(), project.getId());
-            transaction.setReceiptUrl(newFileName);
+            fileStorageService.deleteFile(transaction.getReceiptUrl());
+            transaction.setReceiptUrl(fileStorageService.saveFileToSubfolder(dto.receiptFile(), transactionFolder));
         }
 
         // --- Handle Item Photo ---
         if (dto.itemImageFile() != null && !dto.itemImageFile().isEmpty()) {
-            deleteFile(transaction.getItemImageUrl());
-            String newFileName = fileStorageService.saveTransactionFile(dto.itemImageFile(), project.getId());
-            transaction.setItemImageUrl(newFileName);
+            fileStorageService.deleteFile(transaction.getItemImageUrl());
+            transaction.setItemImageUrl(fileStorageService.saveFileToSubfolder(dto.itemImageFile(), transactionFolder));
         }
 
         // --- SMART SELLER PARSING ---
@@ -170,20 +167,6 @@ public class TransactionService {
         }
 
         transactionRepository.save(transaction);
-    }
-
-    // Helper to delete old files from disk
-    private void deleteFile(String fileName) {
-        if (fileName != null && !fileName.isBlank()) {
-            try {
-                Path path = Paths.get("uploads").resolve(fileName);
-                Files.deleteIfExists(path);
-            } catch (Exception e) {
-                System.err.println("Could not delete old file: " + fileName);
-                // We don't throw an exception here because it's not critical
-                // if a trash file remains, we just log it.
-            }
-        }
     }
 
     // --- READ METHODS (Using Output DTOs) ---
@@ -221,7 +204,10 @@ public class TransactionService {
         String details = buildTransactionDetails(txn.getProject(), txn.getType(), txn.getCategory(), txn.getAmount(), txn.getDate(), txn.getDescription());
         auditService.notifyCriticalAlert("Безповоротно видалено транзакцію! %s", details);
 
-        // Optional: In the future, you might want to delete the actual files from disk here too.
+        // Delete physical files before removing the database record
+        fileStorageService.deleteFile(txn.getReceiptUrl());
+        fileStorageService.deleteFile(txn.getItemImageUrl());
+
         transactionRepository.deleteById(id);
     }
 
