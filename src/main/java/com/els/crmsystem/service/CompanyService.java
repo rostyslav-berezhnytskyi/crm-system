@@ -96,9 +96,10 @@ public class CompanyService {
                 .orElseThrow(() -> new IllegalArgumentException("Company not found"));
         company.setActive(false);
 
-        auditService.notifyCriticalAlert("ВИДАЛЕНО КОМПАНІЮ: '%s' (Роль: %s)",
-                company.getName(), company.getRole().name());
-
+        if (company.getRole() != com.els.crmsystem.enums.CompanyRole.LEAD) { // there is no need to constantly ping telegram group of deletion of unused contacts/companies)
+            auditService.notifyCriticalAlert("ВИДАЛЕНО КОМПАНІЮ: '%s' (Роль: %s)",
+                    company.getName(), company.getRole().name());
+        }
         companyRepository.save(company);
     }
 

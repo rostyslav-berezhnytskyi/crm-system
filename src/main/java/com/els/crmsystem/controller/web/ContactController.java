@@ -125,6 +125,7 @@ public class ContactController {
             return "contacts/form";
         }
         contactService.createContact(dto);
+        if (dto.role() == ContactRole.LEAD || dto.role() == ContactRole.PROSPECT) return "redirect:/pipeline";
         return "redirect:/contacts";
     }
 
@@ -144,14 +145,16 @@ public class ContactController {
             return "contacts/form";
         }
         contactService.updateContact(id, dto);
+        if (dto.role() == ContactRole.LEAD || dto.role() == ContactRole.PROSPECT) return "redirect:/pipeline";
         return "redirect:/contacts";
     }
 
     // 6. Deactivate (Delete) a contact
     @PostMapping("/delete/{id}")
-    public String deleteContact(@PathVariable Long id) {
+    public String deleteContact(@PathVariable Long id, HttpServletRequest request) {
         contactService.deactivateContact(id);
-        return "redirect:/contacts";
+        String referer = request.getHeader("Referer");
+        return "redirect:" + (referer != null ? referer : "/contacts");
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTOR')")

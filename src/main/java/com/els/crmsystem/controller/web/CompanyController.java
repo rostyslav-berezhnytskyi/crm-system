@@ -103,10 +103,9 @@ public class CompanyController {
     // 3. Process the form submission
     @PostMapping
     public String createCompany(@Valid @ModelAttribute("company") CompanyInputDto dto, BindingResult result) {
-        if (result.hasErrors()) {
-            return "companies/form";
-        }
+        if (result.hasErrors()) return "companies/form";
         companyService.createCompany(dto);
+        if (dto.role() == CompanyRole.LEAD || dto.role() == CompanyRole.PROSPECT) return "redirect:/pipeline";
         return "redirect:/companies";
     }
 
@@ -126,14 +125,16 @@ public class CompanyController {
             return "companies/form";
         }
         companyService.updateCompany(id, dto);
+        if (dto.role() == CompanyRole.LEAD || dto.role() == CompanyRole.PROSPECT) return "redirect:/pipeline";
         return "redirect:/companies";
     }
 
     // 6. Deactivate (Delete) a company
     @PostMapping("/delete/{id}")
-    public String deleteCompany(@PathVariable Long id) {
+    public String deleteCompany(@PathVariable Long id, HttpServletRequest request) {
         companyService.deactivateCompany(id);
-        return "redirect:/companies";
+        String referer = request.getHeader("Referer");
+        return "redirect:" + (referer != null ? referer : "/companies");
     }
 
     @PostMapping("/{id}/documents")

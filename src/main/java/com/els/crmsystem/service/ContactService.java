@@ -111,10 +111,10 @@ public class ContactService {
         // Grab the company name safely, or say they are independent
         String companyName = contact.getCompany() != null ? contact.getCompany().getName() : "Незалежний";
 
-        // Loud Telegram Alert - NO ID!
-        auditService.notifyCriticalAlert("ВИДАЛЕНО КОНТАКТ: '%s' (Роль: %s, Компанія: %s)",
-                contact.getName(), contact.getRole().name(), companyName);
-
+        if (contact.getRole() != ContactRole.LEAD) {
+            auditService.notifyCriticalAlert("ВИДАЛЕНО КОНТАКТ: '%s' (Роль: %s, Компанія: %s)",
+                    contact.getName(), contact.getRole().name(), companyName);
+        }
         contactRepository.save(contact);
     }
 
