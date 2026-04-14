@@ -274,12 +274,12 @@ public class EntityMapper {
     // ==========================================
     // TASK MAPPINGS
     // ==========================================
-    public TaskOutputDto toOutputDto(Task task) {
+    public com.els.crmsystem.dto.output.TaskOutputDto toOutputDto(com.els.crmsystem.entity.Task task) {
         if (task == null) {
             return null;
         }
 
-        return new TaskOutputDto(
+        return new com.els.crmsystem.dto.output.TaskOutputDto(
                 task.getId(),
                 task.getTitle(),
                 task.getDescription(),
@@ -289,27 +289,24 @@ public class EntityMapper {
                 task.getDueDate(),
                 task.isCompleted(),
 
-                // Group (Required, but safe to check)
                 task.getGroup() != null ? task.getGroup().getId() : null,
                 task.getGroup() != null ? task.getGroup().getName() : null,
-
-                // Creator (Required)
                 task.getCreator() != null ? task.getCreator().getUsername() : "Система",
-
-                // Assignee (Optional)
                 task.getAssignee() != null ? task.getAssignee().getUsername() : null,
-
-                // Project (Optional)
                 task.getLinkedProject() != null ? task.getLinkedProject().getId() : null,
                 task.getLinkedProject() != null ? task.getLinkedProject().getName() : null,
-
-                // Company (Optional)
                 task.getLinkedCompany() != null ? task.getLinkedCompany().getId() : null,
                 task.getLinkedCompany() != null ? task.getLinkedCompany().getName() : null,
-
-                // Contact (Optional)
                 task.getLinkedContact() != null ? task.getLinkedContact().getId() : null,
-                task.getLinkedContact() != null ? task.getLinkedContact().getName() : null
+                task.getLinkedContact() != null ? task.getLinkedContact().getName() : null,
+
+                // Map Attachments
+                task.getAttachments() == null ? java.util.Collections.emptyList() :
+                        task.getAttachments().stream().map(this::toOutputDto).toList(),
+
+                // Map Subtasks (Recursive call!)
+                task.getSubtasks() == null ? java.util.Collections.emptyList() :
+                        task.getSubtasks().stream().map(this::toOutputDto).toList()
         );
     }
 }

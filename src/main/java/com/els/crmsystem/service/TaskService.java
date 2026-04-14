@@ -117,4 +117,40 @@ public class TaskService {
             }
         }
     }
+
+    public Task getTaskById(Long id) {
+        return taskRepository.findById(id).orElseThrow();
+    }
+
+    @Transactional
+    public void toggleTaskCompletion(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        // Flip the boolean (if true -> false, if false -> true)
+        task.setCompleted(!task.isCompleted());
+        taskRepository.save(task);
+    }
+
+    @Transactional
+    public void updateTask(Long id, TaskInputDto dto) {
+        Task task = taskRepository.findById(id).orElseThrow();
+        task.setTitle(dto.title());
+        task.setDescription(dto.description());
+        task.setPriority(dto.priority());
+        task.setDueDate(dto.dueDate());
+
+        // Оновлюємо групу (колонку)
+        if (dto.groupId() != null) {
+            TaskGroup group = groupRepository.findById(dto.groupId()).orElseThrow();
+            task.setGroup(group);
+        }
+
+        // Оновлюємо зв'язки
+        task.setAssignee(dto.assigneeId() != null ? userRepository.findById(dto.assigneeId()).orElse(null) : null);
+        task.setLinkedProject(dto.projectId() != null ? projectRepository.findById(dto.projectId()).orElse(null) : null);
+        task.setLinkedCompany(dto.companyId() != null ? companyRepository.findById(dto.companyId()).orElse(null) : null);
+        task.setLinkedContact(dto.contactId() != null ? contactRepository.findById(dto.contactId()).orElse(null) : null);
+
+        taskRepository.save(task);
+    }
 }

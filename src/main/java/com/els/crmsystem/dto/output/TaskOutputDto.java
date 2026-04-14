@@ -2,6 +2,7 @@ package com.els.crmsystem.dto.output;
 
 import com.els.crmsystem.enums.TaskPriority;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record TaskOutputDto(
         Long id,
@@ -25,5 +26,9 @@ public record TaskOutputDto(
         Long companyId,
         String companyName,
         Long contactId,
-        String contactName
+        String contactName,
+
+        // Nested Data for the Details Modal!
+        List<TaskAttachmentOutputDto>attachments,
+        List<TaskOutputDto> subtasks
 ) {}
