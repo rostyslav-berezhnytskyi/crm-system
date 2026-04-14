@@ -3,6 +3,7 @@ package com.els.crmsystem.controller.api;
 import com.els.crmsystem.dto.input.TaskInputDto;
 import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.service.TaskAttachmentService;
+import com.els.crmsystem.service.TaskGroupService;
 import com.els.crmsystem.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ public class TaskRestController {
     private final TaskService taskService;
     private final EntityMapper mapper;
     private final TaskAttachmentService taskAttachmentService; // ADD THIS
+    private final TaskGroupService groupService;
 
     // 1. Create a new task via AJAX
     @PostMapping
@@ -74,6 +76,37 @@ public class TaskRestController {
         // Ми просто перевикористаємо логіку сервісу.
         // Найпростіший спосіб - додати метод update у TaskService
         taskService.updateTask(id, dto);
+        return ResponseEntity.ok().build();
+    }
+
+    // ==========================================
+    // TASK GROUP MANAGEMENT
+    // ==========================================
+
+    // We need to inject TaskGroupService at the top of the class first!
+    // private final com.els.crmsystem.service.TaskGroupService groupService;
+
+    @PostMapping("/groups")
+    public ResponseEntity<?> createGroup(@RequestParam String name, @RequestParam(required = false) String colorHex) {
+        groupService.createGroup(name, colorHex);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/groups/{id}")
+    public ResponseEntity<?> updateGroup(@PathVariable Long id, @RequestParam String name) {
+        groupService.updateGroupName(id, name);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/groups/{id}")
+    public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
+        groupService.deleteGroup(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/groups/reorder")
+    public ResponseEntity<?> reorderGroups(@RequestBody List<Long> orderedGroupIds) {
+        groupService.updateGroupPositions(orderedGroupIds);
         return ResponseEntity.ok().build();
     }
 }

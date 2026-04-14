@@ -153,4 +153,25 @@ public class TaskService {
 
         taskRepository.save(task);
     }
+
+    @Transactional(readOnly = true)
+    public List<TaskOutputDto> getTasksForContact(Long contactId) {
+        return taskRepository.findByLinkedContactId(contactId).stream()
+                .map(mapper::toOutputDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskOutputDto> getTasksForCompany(Long companyId) {
+        return taskRepository.findByLinkedCompanyId(companyId).stream()
+                .map(mapper::toOutputDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskOutputDto> getTasksForProject(Long projectId) {
+        return taskRepository.findByLinkedProjectId(projectId).stream()
+                .map(mapper::toOutputDto)
+                .collect(Collectors.toList());
+    }
 }

@@ -36,6 +36,9 @@ public class ContactController {
     private final FinanceService financeService;
     private final ExcelExportService excelExportService;
     private final AuditNotificationService auditService;
+    private final TaskService taskService;
+    private final TaskGroupService taskGroupService;
+    private final UserService userService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -114,6 +117,17 @@ public class ContactController {
             model.addAttribute("totalExpense", financeService.calculateTotalExpense(transactions));
             model.addAttribute("expenseBreakdown", financeService.getExpenseBreakdownByCategory(transactions));
         }
+        model.addAttribute("tasks", taskService.getTasksForContact(id));
+
+        // --- FAST LOADING FOR TASK MODAL ---
+        // We only load small dictionaries to keep the page lightning fast.
+        model.addAttribute("taskGroups", taskGroupService.getAllGroups());
+        model.addAttribute("users", userService.findAllActiveUsers());
+
+        // Pass empty lists for heavy data. We will handle them in JS!
+        model.addAttribute("projects", java.util.Collections.emptyList());
+        model.addAttribute("companies", java.util.Collections.emptyList());
+        model.addAttribute("contacts", java.util.Collections.emptyList());
 
         return "contacts/view";
     }

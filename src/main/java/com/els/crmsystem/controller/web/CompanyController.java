@@ -36,6 +36,10 @@ public class CompanyController {
     private final FinanceService financeService;
     private final AuditNotificationService auditService;
 
+    private final TaskService taskService;
+    private final TaskGroupService taskGroupService;
+    private final UserService userService;
+
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
     public CompanyRole[] getCompanyRoles(HttpServletRequest request) {
@@ -97,6 +101,15 @@ public class CompanyController {
         model.addAttribute("totalExpense", financeService.calculateTotalExpense(txns));
         model.addAttribute("expenseBreakdown", financeService.getExpenseBreakdownByCategory(txns));
 
+        // --- ADDED: Load Tasks and Modal Dictionaries ---
+        model.addAttribute("tasks", taskService.getTasksForCompany(id));
+        model.addAttribute("taskGroups", taskGroupService.getAllGroups());
+        model.addAttribute("users", userService.findAllActiveUsers());
+
+        // Fast-loading empty lists for the heavy data
+        model.addAttribute("projects", java.util.Collections.emptyList());
+        model.addAttribute("companies", java.util.Collections.emptyList());
+        model.addAttribute("contacts", java.util.Collections.emptyList());
         return "companies/view";
     }
 

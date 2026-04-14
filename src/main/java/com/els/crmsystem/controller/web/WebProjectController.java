@@ -31,6 +31,10 @@ public class WebProjectController {
     private final TransactionService transactionService;
     private final FinanceService financeService;
 
+    private final TaskService taskService;
+    private final TaskGroupService taskGroupService;
+    private final UserService userService;
+
     private void populateDropdowns(Model model) {
 
         // 1. Filtered List for the "Client" Dropdown (Only CLIENT contacts)
@@ -93,6 +97,16 @@ public class WebProjectController {
 
         // Pass all active contacts so we can show them in the "Add Contact" dropdown
         model.addAttribute("allContacts", contactService.getAllActiveContacts());
+
+        // --- ADDED: Load Tasks and Modal Dictionaries ---
+        model.addAttribute("tasks", taskService.getTasksForProject(id));
+        model.addAttribute("taskGroups", taskGroupService.getAllGroups());
+        model.addAttribute("users", userService.findAllActiveUsers());
+
+        // Fast-loading empty lists for the heavy data (so the task modal doesn't slow down the page)
+        model.addAttribute("projects", java.util.Collections.emptyList());
+        model.addAttribute("companies", java.util.Collections.emptyList());
+        model.addAttribute("contacts", java.util.Collections.emptyList());
 
         return "project/project-view";
     }

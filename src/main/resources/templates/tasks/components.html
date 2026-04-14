@@ -46,7 +46,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="taskAssigneeId" class="form-label fw-semibold">Виконавець</label>
-                                <select id="taskAssigneeId" class="form-select">
+                                <select id="taskAssigneeId" class="form-select search-select">
                                     <option value="">-- Не призначено --</option>
                                     <option th:each="u : ${users}" th:value="${u.id}" th:text="${u.username}">Користувач</option>
                                 </select>
@@ -54,21 +54,21 @@
                             <div class="col-12"><hr class="my-0"><p class="text-muted small mb-0 mt-2">Прив'язка до об'єкта (необов'язково)</p></div>
                             <div class="col-md-4">
                                 <label for="taskProjectId" class="form-label fw-semibold">Проєкт</label>
-                                <select id="taskProjectId" class="form-select">
+                                <select id="taskProjectId" class="form-select search-select">
                                     <option value="">-- Не вказано --</option>
                                     <option th:each="p : ${projects}" th:value="${p.id}" th:text="${p.name}">Проєкт</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label for="taskCompanyId" class="form-label fw-semibold">Компанія</label>
-                                <select id="taskCompanyId" class="form-select">
+                                <select id="taskCompanyId" class="form-select search-select">
                                     <option value="">-- Не вказано --</option>
                                     <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}">Компанія</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label for="taskContactId" class="form-label fw-semibold">Контакт</label>
-                                <select id="taskContactId" class="form-select">
+                                <select id="taskContactId" class="form-select search-select">
                                     <option value="">-- Не вказано --</option>
                                     <option th:each="ct : ${contacts}" th:value="${ct.id}" th:text="${ct.name}">Контакт</option>
                                 </select>
@@ -100,6 +100,9 @@
                     </div>
                 </div>
                 <div class="modal-body p-4 pt-3">
+                    <div class="d-flex flex-wrap gap-4 mb-4 pb-3 border-bottom" id="detailTaskMetadata">
+                    </div>
+
                     <div class="mb-4">
                         <h6 class="fw-bold text-muted mb-2"><i class="bi bi-card-text me-2"></i>Опис</h6>
                         <div id="detailTaskDescription" class="p-3 bg-white border rounded-3" style="min-height: 80px; white-space: pre-wrap;">Опис відсутній.</div>
@@ -145,6 +148,27 @@
         .task-list.empty-list { min-height: 120px; }
         .task-list .sortable-chosen ~ .empty-placeholder { display: none !important; }
         .task-list:has(.task-card) .empty-placeholder { display: none !important; }
+        /* Вирівнювання висоти TomSelect зі стандартними полями Bootstrap */
+        .ts-control {
+            min-height: 38px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border-color: #dee2e6;
+        }
+        /* Стиль для великого штампу ВИКОНАНО */
+        .completed-stamp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg) !important;
+            font-size: 2.5rem;
+            color: #198754; /* Success color */
+            opacity: 0.15;
+            font-weight: 900;
+            pointer-events: none; /* Щоб не заважав клікати на картку */
+            z-index: 1;
+            letter-spacing: 2px;
+        }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -154,6 +178,7 @@
         const CSRF_TOKEN  = /*[[${_csrf.token}]]*/ '';
         const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
         let currentOpenTaskId = null;
+        let currentOpenTaskGroupId = null;
         let isEditMode = false;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -185,8 +210,18 @@
             isEditMode = false;
             document.getElementById('createTaskModalLabel').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Нова задача';
             document.getElementById('createTaskForm').reset();
-        }
 
+            // Clear the searchable dropdowns if they exist
+            ['taskAssigneeId', 'taskProjectId', 'taskCompanyId', 'taskContactId'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.tomselect) el.tomselect.clear();
+            });
+
+            // THIS WAS MISSING: Actually show the modal!
+            const modalEl = document.getElementById('createTaskModal');
+            let modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modalInstance.show();
+        }
         function editCurrentTask() {
             if (!currentOpenTaskId) return;
             isEditMode = true;
@@ -198,10 +233,37 @@
                 document.getElementById('taskPriority').value = task.priority;
                 document.getElementById('taskGroupId').value = task.groupId;
                 document.getElementById('taskAssigneeId').value = task.assigneeId || '';
-                document.getElementById('taskProjectId').value = task.projectId || '';
-                document.getElementById('taskCompanyId').value = task.companyId || '';
-                document.getElementById('taskContactId').value = task.contactId || '';
                 document.getElementById('taskDueDate').value = task.dueDate ? task.dueDate.substring(0, 16) : '';
+
+                // --- SMART DROPDOWN LOGIC ---
+                // Safely handles empty dropdowns on fast-loading pages like Contact/Company/Project View
+                function safeSetOption(selectId, value, textName) {
+                    const select = document.getElementById(selectId);
+                    if (!select) return; // Fail-safe
+
+                    if (value) {
+                        // If the option doesn't exist in the HTML, create it dynamically
+                        if (![...select.options].some(opt => opt.value == value)) {
+                            select.add(new Option(textName, value, true, true));
+                        } else {
+                            select.value = value;
+                        }
+
+                        // If this select uses TomSelect, sync it
+                        if (select.tomselect) {
+                            select.tomselect.addOption({value: value, text: textName});
+                            select.tomselect.setValue(value);
+                        }
+                    } else {
+                        select.value = '';
+                        if (select.tomselect) select.tomselect.clear();
+                    }
+                }
+
+                safeSetOption('taskProjectId', task.projectId, task.projectName);
+                safeSetOption('taskCompanyId', task.companyId, task.companyName);
+                safeSetOption('taskContactId', task.contactId, task.contactName);
+                // ----------------------------
                 new bootstrap.Modal(document.getElementById('createTaskModal')).show();
             });
         }
@@ -249,19 +311,54 @@
             const taskId = typeof cardElementOrId === 'object' ? cardElementOrId.dataset.taskId : cardElementOrId;
             currentOpenTaskId = taskId;
             fetch(`/api/tasks/${taskId}`).then(res => res.json()).then(task => {
+                currentOpenTaskGroupId = task.groupId;
                 document.getElementById('detailTaskTitle').textContent = task.title;
                 const btn = document.getElementById('toggleCompleteBtn');
                 btn.className = task.completed ? 'btn btn-success btn-sm fw-semibold shadow-sm' : 'btn btn-outline-success btn-sm fw-semibold shadow-sm';
                 btn.innerHTML = task.completed ? '<i class="bi bi-arrow-counterclockwise me-1"></i>Повернути в роботу' : '<i class="bi bi-check-circle me-1"></i>Готово';
                 document.getElementById('detailTaskDescription').textContent = task.description || 'Опис відсутній.';
 
+                // --- ADDED: Render Metadata ---
+                const priorityMap = {
+                    'LOW': '<span class="badge bg-secondary">Низький</span>',
+                    'MEDIUM': '<span class="badge bg-info text-dark">Середній</span>',
+                    'HIGH': '<span class="badge bg-warning text-dark">Високий</span>',
+                    'URGENT': '<span class="badge bg-danger">Терміновий</span>'
+                };
+
+                let dueDateHtml = '<span class="fw-bold text-dark">Немає</span>';
+                if (task.dueDate) {
+                    const isOverdue = new Date(task.dueDate) < new Date() && !task.completed;
+                    const dateStr = task.dueDate.replace('T', ' ').substring(0, 16);
+                    dueDateHtml = `<span class="fw-bold ${isOverdue ? 'text-danger' : 'text-dark'}">${dateStr}</span>`;
+                }
+
+                document.getElementById('detailTaskMetadata').innerHTML = `
+                    <div class="d-flex align-items-center text-muted small"><i class="bi bi-person-fill me-2 fs-6"></i>Виконавець: <span class="fw-bold text-dark ms-1">${task.assigneeName || 'Не призначено'}</span></div>
+                    <div class="d-flex align-items-center text-muted small"><i class="bi bi-calendar-event me-2 fs-6"></i>Дедлайн: <span class="ms-1">${dueDateHtml}</span></div>
+                    <div class="d-flex align-items-center text-muted small"><i class="bi bi-kanban me-2 fs-6"></i>Колонка: <span class="fw-bold text-dark ms-1">${task.groupName || '-'}</span></div>
+                    <div class="d-flex align-items-center text-muted small"><i class="bi bi-flag me-2 fs-6"></i>Пріоритет: <span class="ms-1">${priorityMap[task.priority] || task.priority}</span></div>
+                `;
+                // ------------------------------
+
+                // 4. Populate Context Badges (AS CLICKABLE LINKS)
                 const contextContainer = document.getElementById('detailTaskContextContainer');
                 const contextDiv = document.getElementById('detailTaskContext');
                 contextDiv.innerHTML = '';
                 let hasContext = false;
-                if (task.projectName) { contextDiv.innerHTML += `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fs-6"><i class="bi bi-folder2 me-2"></i>${task.projectName}</span>`; hasContext = true; }
-                if (task.companyName) { contextDiv.innerHTML += `<span class="badge bg-success bg-opacity-10 text-success border border-success-subtle fs-6"><i class="bi bi-buildings me-2"></i>${task.companyName}</span>`; hasContext = true; }
-                if (task.contactName) { contextDiv.innerHTML += `<span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle fs-6"><i class="bi bi-person-vcard me-2"></i>${task.contactName}</span>`; hasContext = true; }
+
+                if (task.projectName) {
+                    contextDiv.innerHTML += `<a href="/projects/${task.projectId}" class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fs-6 text-decoration-none"><i class="bi bi-folder2 me-2"></i>${task.projectName}</a>`;
+                    hasContext = true;
+                }
+                if (task.companyName) {
+                    contextDiv.innerHTML += `<a href="/companies/${task.companyId}" class="badge bg-success bg-opacity-10 text-success border border-success-subtle fs-6 text-decoration-none"><i class="bi bi-buildings me-2"></i>${task.companyName}</a>`;
+                    hasContext = true;
+                }
+                if (task.contactName) {
+                    contextDiv.innerHTML += `<a href="/contacts/${task.contactId}" class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle fs-6 text-decoration-none"><i class="bi bi-person-vcard me-2"></i>${task.contactName}</a>`;
+                    hasContext = true;
+                }
                 contextContainer.style.display = hasContext ? 'block' : 'none';
 
                 const subtasksUl = document.getElementById('detailTaskSubtasks');
@@ -309,7 +406,7 @@
             if (!currentOpenTaskId) return;
             const titleInput = document.getElementById('newSubtaskTitle');
             if (!titleInput.value.trim()) return;
-            const groupId = parseInt(document.querySelector(`.task-card[data-task-id="${currentOpenTaskId}"]`).closest('.task-list').dataset.groupId, 10);
+            const groupId = currentOpenTaskGroupId;
 
             fetch('/api/tasks', {
                 method: 'POST',
@@ -334,6 +431,169 @@
             }).then(res => {
                 btn.innerHTML = 'Завантажити'; btn.disabled = false;
                 if (res.ok) { fileInput.value = ''; openTaskDetails(currentOpenTaskId); }
+            });
+        }
+
+        // ----------------------------------------------------------------
+        // FRONTEND KANBAN FILTERING (ЄДИНИЙ БЛОК)
+        // ----------------------------------------------------------------
+        function applyFilters() {
+            const searchText = document.getElementById('filterSearch').value.toLowerCase();
+            const priority   = document.getElementById('filterPriority').value;
+            const assignee   = document.getElementById('filterAssignee').value.toLowerCase();
+            const project    = document.getElementById('filterProject').value;
+            const company    = document.getElementById('filterCompany').value;
+            const contact    = document.getElementById('filterContact').value;
+
+            const dateFrom   = document.getElementById('filterDateFrom').value;
+            const dateTo     = document.getElementById('filterDateTo').value;
+
+            const cards = document.querySelectorAll('.task-card');
+
+            cards.forEach(card => {
+                let showCard = true;
+
+                // Пошук тексту (опис/назва)
+                if (searchText && !card.innerText.toLowerCase().includes(searchText)) showCard = false;
+
+                // Фільтр по пріоритету та виконавцю
+                if (priority && card.dataset.priority !== priority) showCard = false;
+                if (assignee && card.dataset.assignee !== assignee) showCard = false;
+
+                // Фільтр по періоду дат
+                if (dateFrom || dateTo) {
+                    const taskDateRaw = card.dataset.dueDate;
+                    if (!taskDateRaw) {
+                        showCard = false; // Ховаємо задачі без дати, якщо фільтр активний
+                    } else {
+                        const taskDate = taskDateRaw.substring(0, 10); // YYYY-MM-DD
+                        if (dateFrom && taskDate < dateFrom) showCard = false;
+                        if (dateTo && taskDate > dateTo) showCard = false;
+                    }
+                }
+
+                // Точні фільтри по ID (використовуючи TomSelect)
+                if (project  && card.dataset.projectId !== project) showCard = false;
+                if (company  && card.dataset.companyId !== company) showCard = false;
+                if (contact  && card.dataset.contactId !== contact) showCard = false;
+
+                card.style.display = showCard ? 'block' : 'none';
+            });
+
+            updateColumnCounters();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('filterPriority').value = '';
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+
+            // Очищаємо всі TomSelect випадаючі списки
+            ['filterAssignee', 'filterProject', 'filterCompany', 'filterContact'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.tomselect) {
+                    el.tomselect.setValue('');
+                } else if (el) {
+                    el.value = '';
+                }
+            });
+
+            applyFilters();
+        }
+
+        function updateColumnCounters() {
+            document.querySelectorAll('.task-list').forEach(list => {
+                const badge = list.parentElement.querySelector('.badge');
+                let visibleCount = 0;
+                list.querySelectorAll('.task-card').forEach(card => {
+                    if (card.style.display !== 'none') visibleCount++;
+                });
+                if (badge) badge.innerText = visibleCount;
+            });
+        }
+
+        // Прив'язка TomSelect 'change' events
+        document.addEventListener('DOMContentLoaded', () => {
+            ['filterAssignee', 'filterProject', 'filterCompany', 'filterContact'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.tomselect) {
+                    el.tomselect.on('change', applyFilters);
+                }
+            });
+        });
+
+        // ==========================================
+        // GROUP (COLUMN) DRAG & DROP
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            const boardContainer = document.getElementById('boardContainer');
+            if (boardContainer) {
+                Sortable.create(boardContainer, {
+                    animation: 150,
+                    handle: '.group-drag-handle', // Only drag when clicking the column title
+                    filter: '.ignore-drag',       // Do not drag the "Add Column" button
+                    ghostClass: 'sortable-ghost',
+                    onEnd(evt) {
+                        // Gather the new order of group IDs
+                        const orderedGroupIds = [...boardContainer.querySelectorAll('.task-group-column')]
+                            .map(col => parseInt(col.dataset.groupId, 10));
+
+                        // Send to the new backend endpoint
+                        fetch('/api/tasks/groups/reorder', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', [CSRF_HEADER]: CSRF_TOKEN },
+                            body: JSON.stringify(orderedGroupIds)
+                        }).then(res => {
+                            if (!res.ok) alert('Помилка при збереженні порядку колонок');
+                        }).catch(() => alert('Помилка з\'єднання'));
+                    }
+                });
+            }
+        });
+
+        // ==========================================
+        // GROUP MANAGEMENT BUTTON LOGIC
+        // ==========================================
+
+        // 1. Create Column
+        function promptCreateGroup() {
+            const name = prompt("Введіть назву нової колонки:");
+            if (!name || !name.trim()) return;
+
+            fetch(`/api/tasks/groups?name=${encodeURIComponent(name.trim())}`, {
+                method: 'POST',
+                headers: { [CSRF_HEADER]: CSRF_TOKEN }
+            }).then(res => {
+                if (res.ok) location.reload();
+                else alert("Сталася помилка при створенні колонки.");
+            });
+        }
+
+        // 2. Rename Column
+        function promptRenameGroup(id, currentName) {
+            const newName = prompt("Введіть нову назву колонки:", currentName);
+            if (!newName || !newName.trim() || newName.trim() === currentName) return;
+
+            fetch(`/api/tasks/groups/${id}?name=${encodeURIComponent(newName.trim())}`, {
+                method: 'PUT',
+                headers: { [CSRF_HEADER]: CSRF_TOKEN }
+            }).then(res => {
+                if (res.ok) location.reload();
+                else alert("Сталася помилка при перейменуванні.");
+            });
+        }
+
+        // 3. Delete Column
+        function deleteGroup(id) {
+            if (!confirm("УВАГА! Видалення колонки також безповоротно видалить ВСІ задачі всередині неї. Ви впевнені?")) return;
+
+            fetch(`/api/tasks/groups/${id}`, {
+                method: 'DELETE',
+                headers: { [CSRF_HEADER]: CSRF_TOKEN }
+            }).then(res => {
+                if (res.ok) location.reload();
+                else alert("Сталася помилка при видаленні.");
             });
         }
         /*]]>*/

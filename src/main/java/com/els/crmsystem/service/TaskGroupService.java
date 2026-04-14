@@ -51,4 +51,19 @@ public class TaskGroupService {
         log.warn("Deleting Task Group ID: {}. All tasks inside it will be lost!", id);
         taskGroupRepository.deleteById(id);
     }
+
+    @Transactional
+    public void updateGroupPositions(List<Long> orderedGroupIds) {
+        log.info("Reordering task groups: {}", orderedGroupIds);
+        for (int i = 0; i < orderedGroupIds.size(); i++) {
+            Long id = orderedGroupIds.get(i);
+
+            // Standard fetch without lambda prevents the "effectively final" error
+            TaskGroup group = taskGroupRepository.findById(id).orElse(null);
+            if (group != null) {
+                group.setDisplayOrder(i + 1); // 1, 2, 3...
+                taskGroupRepository.save(group);
+            }
+        }
+    }
 }

@@ -20,4 +20,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // 3. For finding where to put a new task (gets the bottom position of a column)
     @Query("SELECT COALESCE(MAX(t.displayOrder), 0) FROM Task t WHERE t.group.id = :groupId")
     int findMaxDisplayOrderByGroupId(@Param("groupId") Long groupId);
+
+    // Fetch all tasks for a specific contact, optionally ordered by due date or status
+    List<Task> findByLinkedContactId(Long contactId);
+
+    List<Task> findByLinkedCompanyId(Long companyId);
+
+    List<Task> findByLinkedProjectId(Long projectId);
 }
