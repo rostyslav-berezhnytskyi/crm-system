@@ -477,7 +477,7 @@
                 if (company  && card.dataset.companyId !== company) showCard = false;
                 if (contact  && card.dataset.contactId !== contact) showCard = false;
 
-                card.style.display = showCard ? 'block' : 'none';
+                card.style.display = showCard ? '' : 'none';
             });
 
             updateColumnCounters();

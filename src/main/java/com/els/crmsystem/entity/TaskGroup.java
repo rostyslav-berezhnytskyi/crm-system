@@ -2,6 +2,8 @@ package com.els.crmsystem.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,5 +31,6 @@ public class TaskGroup {
     // This allows you to easily grab all tasks in a column
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     @OrderBy("displayOrder ASC") // Automatically sorts tasks top-to-bottom
+    @SQLRestriction("is_completed = false")
     private List<Task> tasks = new ArrayList<>();
 }

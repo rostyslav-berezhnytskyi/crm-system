@@ -7,6 +7,10 @@ import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -173,5 +177,13 @@ public class TaskService {
         return taskRepository.findByLinkedProjectId(projectId).stream()
                 .map(mapper::toOutputDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaskOutputDto> getAllCompletedTasks(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("dueDate").descending());
+        // You will need to add findByCompletedTrue(Pageable pageable) to TaskRepository!
+        return taskRepository.findByCompletedTrue(pageable)
+                .map(mapper::toOutputDto);
     }
 }
