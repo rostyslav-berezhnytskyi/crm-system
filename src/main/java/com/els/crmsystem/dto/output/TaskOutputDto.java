@@ -31,5 +31,6 @@ public record TaskOutputDto(
 
         // Nested Data for the Details Modal!
         List<TaskAttachmentOutputDto>attachments,
-        List<TaskOutputDto> subtasks
+        List<TaskOutputDto> subtasks,
+        List<TaskCommentOutputDto> comments
 ) {}

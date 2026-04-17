@@ -109,4 +109,32 @@ public class TaskRestController {
         groupService.updateGroupPositions(orderedGroupIds);
         return ResponseEntity.ok().build();
     }
+
+    // 5. Add Comment
+    @PostMapping("/{taskId}/comments")
+    public ResponseEntity<?> addComment(
+            @PathVariable Long taskId,
+            @RequestBody java.util.Map<String, String> payload) { // Quick trick to grab simple JSON
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        taskService.addTaskComment(taskId, payload.get("text"), username);
+        return ResponseEntity.ok().build();
+    }
+
+    // 6. Edit Comment
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<?> editComment(
+            @PathVariable Long commentId,
+            @RequestBody java.util.Map<String, String> payload) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        taskService.editTaskComment(commentId, payload.get("text"), username);
+        return ResponseEntity.ok().build();
+    }
+
+    // 7. Delete Comment
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<?> deleteComment(@PathVariable Long commentId) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        taskService.deleteTaskComment(commentId, username);
+        return ResponseEntity.ok().build();
+    }
 }

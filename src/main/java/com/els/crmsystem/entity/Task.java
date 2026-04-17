@@ -79,6 +79,11 @@ public class Task {
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TaskAttachment> attachments = new ArrayList<>();
 
+    // --- COMMENTS (Chat) ---
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC") // Oldest messages at the top, newest at the bottom
+    private List<TaskComment> comments = new ArrayList<>();
+
     // Auto-fill the creation date
     @PrePersist
     protected void onCreate() {

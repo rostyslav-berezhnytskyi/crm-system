@@ -31,6 +31,7 @@ public class TaskService {
     private final ContactRepository contactRepository;
     private final EntityMapper mapper;
     private final AuditNotificationService notificationService;
+    private final TaskCommentRepository commentRepository;
 
     @Transactional
     public void createTask(TaskInputDto dto, String currentUsername) {
@@ -236,9 +237,6 @@ public class TaskService {
 
     // --- UNIVERSAL TELEGRAM NOTIFICATION BUILDER ---
     private void sendTaskTelegramNotification(Task task, String currentUsername, String titlePrefix, String changesText) {
-        if (task.getAssignee() == null || task.getAssignee().getTelegramId() == null) {
-            return;
-        }
 
         // 1. Format Context safely
         String projName = task.getLinkedProject() != null ? task.getLinkedProject().getName() : "—";
@@ -276,6 +274,82 @@ public class TaskService {
         message.append("🏢 Компанія: ").append(compName).append("\n");
         message.append("📞 Контакт: ").append(contactName);
 
-        notificationService.sendDirectMessage(task.getAssignee().getTelegramId(), message.toString());
+        notifyRelevantUsers(task, currentUsername, message.toString());
+    }
+
+    @Transactional
+    public void addTaskComment(Long taskId, String text, String currentUsername) {
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        User author = userRepository.findByUsername(currentUsername).orElseThrow(() -> new RuntimeException("User not found"));
+
+        TaskComment comment = new TaskComment();
+        comment.setText(text);
+        comment.setTask(task);
+        comment.setAuthor(author);
+
+        task.getComments().add(comment);
+        taskRepository.save(task);
+
+        // --- SMART NOTIFICATION ---
+        String message = String.format(
+                "💬 *Новий коментар до задачі!*\n\n" +
+                        "📌 *Назва:* %s\n" +
+                        "👤 *Від:* %s\n" +
+                        "💬 *Повідомлення:* %s",
+                task.getTitle(), currentUsername, text
+        );
+        notifyRelevantUsers(task, currentUsername, message);
+    }
+
+    @Transactional
+    public void editTaskComment(Long commentId, String newText, String currentUsername) {
+        TaskComment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+
+        // Security Check: Only the author can edit
+        if (!comment.getAuthor().getUsername().equals(currentUsername)) {
+            throw new SecurityException("You can only edit your own comments");
+        }
+
+        comment.setText(newText);
+        commentRepository.save(comment);
+    }
+
+    @Transactional
+    public void deleteTaskComment(Long commentId, String currentUsername) {
+        TaskComment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+
+        // Security Check: Only the author can delete
+        if (!comment.getAuthor().getUsername().equals(currentUsername)) {
+            throw new SecurityException("You can only delete your own comments");
+        }
+
+        commentRepository.delete(comment);
+    }
+
+    // --- SMART ROUTING: Decides exactly WHO gets the message ---
+    private void notifyRelevantUsers(Task task, String currentUsername, String message) {
+        java.util.Set<String> notifiedTelegramIds = new java.util.HashSet<>();
+
+        // 1. Check the Assignee
+        if (task.getAssignee() != null
+                && task.getAssignee().getTelegramId() != null
+                && !task.getAssignee().getUsername().equals(currentUsername)) {
+
+            notificationService.sendDirectMessage(task.getAssignee().getTelegramId(), message);
+            notifiedTelegramIds.add(task.getAssignee().getTelegramId());
+        }
+
+        // 2. Check the Creator
+        if (task.getCreator() != null
+                && task.getCreator().getTelegramId() != null
+                && !task.getCreator().getUsername().equals(currentUsername)) {
+
+            // Prevent double-pinging if the Creator IS the Assignee
+            if (!notifiedTelegramIds.contains(task.getCreator().getTelegramId())) {
+                notificationService.sendDirectMessage(task.getCreator().getTelegramId(), message);
+            }
+        }
     }
 }

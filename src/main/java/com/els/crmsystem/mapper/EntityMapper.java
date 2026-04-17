@@ -309,7 +309,20 @@ public class EntityMapper {
 
                 // Map Subtasks (Recursive call!)
                 task.getSubtasks() == null ? Collections.emptyList() :
-                        task.getSubtasks().stream().map(this::toOutputDto).toList()
+                        task.getSubtasks().stream().map(this::toOutputDto).toList(),
+
+                // Map Comments
+                task.getComments() == null ? java.util.Collections.emptyList() :
+                        task.getComments().stream().map(this::toOutputDto).toList()
+        );
+    }
+
+    public TaskCommentOutputDto toOutputDto(TaskComment comment) {
+        return new TaskCommentOutputDto(
+                comment.getId(),
+                comment.getText(),
+                comment.getAuthor().getUsername(),
+                comment.getCreatedAt()
         );
     }
 }
