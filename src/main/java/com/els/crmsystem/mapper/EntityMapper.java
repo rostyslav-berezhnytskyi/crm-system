@@ -9,6 +9,8 @@ import com.els.crmsystem.enums.Role;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
+
 @Component
 public class EntityMapper {
 
@@ -274,12 +276,12 @@ public class EntityMapper {
     // ==========================================
     // TASK MAPPINGS
     // ==========================================
-    public com.els.crmsystem.dto.output.TaskOutputDto toOutputDto(com.els.crmsystem.entity.Task task) {
+    public TaskOutputDto toOutputDto(Task task) {
         if (task == null) {
             return null;
         }
 
-        return new com.els.crmsystem.dto.output.TaskOutputDto(
+        return new TaskOutputDto(
                 task.getId(),
                 task.getTitle(),
                 task.getDescription(),
@@ -292,6 +294,7 @@ public class EntityMapper {
                 task.getGroup() != null ? task.getGroup().getId() : null,
                 task.getGroup() != null ? task.getGroup().getName() : null,
                 task.getCreator() != null ? task.getCreator().getUsername() : "Система",
+                task.getAssignee() != null ? task.getAssignee().getId() : null,
                 task.getAssignee() != null ? task.getAssignee().getUsername() : null,
                 task.getLinkedProject() != null ? task.getLinkedProject().getId() : null,
                 task.getLinkedProject() != null ? task.getLinkedProject().getName() : null,
@@ -301,11 +304,11 @@ public class EntityMapper {
                 task.getLinkedContact() != null ? task.getLinkedContact().getName() : null,
 
                 // Map Attachments
-                task.getAttachments() == null ? java.util.Collections.emptyList() :
+                task.getAttachments() == null ? Collections.emptyList() :
                         task.getAttachments().stream().map(this::toOutputDto).toList(),
 
                 // Map Subtasks (Recursive call!)
-                task.getSubtasks() == null ? java.util.Collections.emptyList() :
+                task.getSubtasks() == null ? Collections.emptyList() :
                         task.getSubtasks().stream().map(this::toOutputDto).toList()
         );
     }

@@ -67,6 +67,24 @@ public class AuditNotificationService {
         }
     }
 
+    // --- 4. NEW: PERSONAL DIRECT MESSAGES ---
+    @Async
+    public void sendDirectMessage(String userTelegramId, String text) {
+        if (userTelegramId == null || userTelegramId.trim().isEmpty()) {
+            return; // Skip if the user hasn't linked their Telegram
+        }
+
+        try {
+            // Same URL, but we use the USER'S chat ID instead of the group's chat ID
+            String url = String.format("https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s&parse_mode=Markdown",
+                    botToken, userTelegramId, text);
+            restTemplate.getForObject(url, String.class);
+            log.info("Sent direct Telegram notification to user ID: {}", userTelegramId);
+        } catch (Exception e) {
+            log.error("Failed to send direct Telegram notification: {}", e.getMessage());
+        }
+    }
+
     // Helper method to make the Telegram feed look nice
     private String getEmojiForAction(String actionType) {
         if (actionType.contains("Транзакція")) return "💰";

@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +29,8 @@ public class TaskService {
     private final ProjectRepository projectRepository;
     private final CompanyRepository companyRepository;
     private final ContactRepository contactRepository;
-    private final EntityMapper mapper; // You will need to add toOutputDto(Task task) to this!
+    private final EntityMapper mapper;
+    private final AuditNotificationService notificationService;
 
     @Transactional
     public void createTask(TaskInputDto dto, String currentUsername) {
@@ -76,6 +78,9 @@ public class TaskService {
         }
 
         taskRepository.save(task);
+
+        // --- TRIGGER UNIVERSAL NOTIFICATION ---
+        sendTaskTelegramNotification(task, currentUsername, "🔔 *Нова задача!*", null);
     }
 
     @Transactional
@@ -138,24 +143,66 @@ public class TaskService {
     @Transactional
     public void updateTask(Long id, TaskInputDto dto) {
         Task task = taskRepository.findById(id).orElseThrow();
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // 1. CAPTURE THE OLD STATE
+        Long oldAssigneeId = task.getAssignee() != null ? task.getAssignee().getId() : null;
+        java.time.LocalDateTime oldDueDate = task.getDueDate();
+        com.els.crmsystem.enums.TaskPriority oldPriority = task.getPriority();
+        Long oldGroupId = task.getGroup() != null ? task.getGroup().getId() : null;
+
+        // 2. APPLY THE UPDATES (Your existing logic)
         task.setTitle(dto.title());
         task.setDescription(dto.description());
         task.setPriority(dto.priority());
         task.setDueDate(dto.dueDate());
 
-        // Оновлюємо групу (колонку)
         if (dto.groupId() != null) {
             TaskGroup group = groupRepository.findById(dto.groupId()).orElseThrow();
             task.setGroup(group);
         }
 
-        // Оновлюємо зв'язки
         task.setAssignee(dto.assigneeId() != null ? userRepository.findById(dto.assigneeId()).orElse(null) : null);
         task.setLinkedProject(dto.projectId() != null ? projectRepository.findById(dto.projectId()).orElse(null) : null);
         task.setLinkedCompany(dto.companyId() != null ? companyRepository.findById(dto.companyId()).orElse(null) : null);
         task.setLinkedContact(dto.contactId() != null ? contactRepository.findById(dto.contactId()).orElse(null) : null);
 
         taskRepository.save(task);
+
+        // 3. SMART NOTIFICATION LOGIC
+        if (task.getAssignee() != null && task.getAssignee().getTelegramId() != null) {
+            StringBuilder changes = new StringBuilder();
+
+            // Check if it was just assigned to a NEW person
+            boolean isNewlyAssigned = oldAssigneeId == null || !oldAssigneeId.equals(task.getAssignee().getId());
+
+            if (isNewlyAssigned) {
+                changes.append("👉 *Вам передано цю задачу!*\n");
+            } else {
+                // Only check these if it's the SAME person, so we tell them what changed
+                if (oldPriority != task.getPriority()) {
+                    changes.append(String.format("🚩 Пріоритет змінено: *%s*\n", task.getPriority().getUkrainianName()));
+                }
+
+                // Compare groups safely
+                Long newGroupId = task.getGroup() != null ? task.getGroup().getId() : null;
+                if (oldGroupId != null && !oldGroupId.equals(newGroupId)) {
+                    changes.append(String.format("📋 Переміщено в колонку: *%s*\n", task.getGroup().getName()));
+                }
+
+                // Compare dates safely
+                String oldDateStr = oldDueDate != null ? java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").format(oldDueDate) : "Немає";
+                String newDateStr = task.getDueDate() != null ? java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").format(task.getDueDate()) : "Немає";
+                if (!oldDateStr.equals(newDateStr)) {
+                    changes.append(String.format("⏳ Новий дедлайн: *%s*\n", newDateStr));
+                }
+            }
+
+            // 4. SEND NOTIFICATION IF SOMETHING CRITICAL CHANGED
+            if (changes.length() > 0) {
+                sendTaskTelegramNotification(task, currentUsername, "⚠️ *Оновлення задачі!*", changes.toString());
+            }
+        }
     }
 
     @Transactional(readOnly = true)
@@ -185,5 +232,50 @@ public class TaskService {
         // You will need to add findByCompletedTrue(Pageable pageable) to TaskRepository!
         return taskRepository.findByCompletedTrue(pageable)
                 .map(mapper::toOutputDto);
+    }
+
+    // --- UNIVERSAL TELEGRAM NOTIFICATION BUILDER ---
+    private void sendTaskTelegramNotification(Task task, String currentUsername, String titlePrefix, String changesText) {
+        if (task.getAssignee() == null || task.getAssignee().getTelegramId() == null) {
+            return;
+        }
+
+        // 1. Format Context safely
+        String projName = task.getLinkedProject() != null ? task.getLinkedProject().getName() : "—";
+        String compName = task.getLinkedCompany() != null ? task.getLinkedCompany().getName() : "—";
+        String contactName = task.getLinkedContact() != null ? task.getLinkedContact().getName() : "—";
+        String groupName = task.getGroup() != null ? task.getGroup().getName() : "—";
+
+        String dueStr = task.getDueDate() != null
+                ? java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").format(task.getDueDate())
+                : "Без дедлайну";
+
+        String description = (task.getDescription() != null && !task.getDescription().trim().isEmpty())
+                ? task.getDescription()
+                : "Немає";
+
+        // 2. Build the Universal Message
+        StringBuilder message = new StringBuilder();
+        message.append(titlePrefix).append("\n\n");
+        message.append("📌 *Назва:* ").append(task.getTitle()).append("\n");
+
+        // If it's an update, show what changed. If it's new, show the description.
+        if (changesText != null && !changesText.isEmpty()) {
+            message.append("\n🔄 *Що змінилося:*\n").append(changesText).append("\n");
+        } else {
+            message.append("📝 *Опис:* ").append(description).append("\n\n");
+        }
+
+        // Add the full context footprint
+        message.append("👤 *Автор/Змінив:* ").append(currentUsername).append("\n");
+        message.append("🚩 *Пріоритет:* ").append(task.getPriority().getUkrainianName()).append("\n");
+        message.append("📋 *Колонка:* ").append(groupName).append("\n");
+        message.append("⏳ *Дедлайн:* ").append(dueStr).append("\n\n");
+        message.append("🔗 *Прив'язка:*\n");
+        message.append("📁 Проєкт: ").append(projName).append("\n");
+        message.append("🏢 Компанія: ").append(compName).append("\n");
+        message.append("📞 Контакт: ").append(contactName);
+
+        notificationService.sendDirectMessage(task.getAssignee().getTelegramId(), message.toString());
     }
 }

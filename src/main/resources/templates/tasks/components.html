@@ -232,7 +232,14 @@
                 document.getElementById('taskDescription').value = task.description || '';
                 document.getElementById('taskPriority').value = task.priority;
                 document.getElementById('taskGroupId').value = task.groupId;
-                document.getElementById('taskAssigneeId').value = task.assigneeId || '';
+                const assigneeSelect = document.getElementById('taskAssigneeId');
+                const assigneeVal = task.assigneeId ? String(task.assigneeId) : '';
+
+                if (assigneeSelect.tomselect) {
+                    assigneeSelect.tomselect.setValue(assigneeVal);
+                } else {
+                    assigneeSelect.value = assigneeVal;
+                }
                 document.getElementById('taskDueDate').value = task.dueDate ? task.dueDate.substring(0, 16) : '';
 
                 // --- SMART DROPDOWN LOGIC ---

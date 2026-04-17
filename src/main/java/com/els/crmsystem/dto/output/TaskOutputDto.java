@@ -18,6 +18,7 @@ public record TaskOutputDto(
         Long groupId,
         String groupName,
         String creatorName,
+        Long assigneeId,
         String assigneeName,
 
         // Context badges for the Trello card
