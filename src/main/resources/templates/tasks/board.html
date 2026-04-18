@@ -26,72 +26,74 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-        <div class="card-body p-3">
-            <div class="row g-3 align-items-end mb-3">
-                <div class="col-md-3">
-                    <label class="form-label small text-muted mb-1 fw-bold">Текст (Назва/Опис)</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" id="filterSearch" class="form-control border-start-0 ps-0" placeholder="Введіть слова..." onkeyup="applyFilters()">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small text-muted mb-1 fw-bold">Пріоритет</label>
-                    <select id="filterPriority" class="form-select" onchange="applyFilters()">
-                        <option value="">Всі пріоритети</option>
-                        <option value="LOW">Низький</option>
-                        <option value="MEDIUM">Середній</option>
-                        <option value="HIGH">Високий</option>
-                        <option value="URGENT">Терміновий</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small text-muted mb-1 fw-bold">Виконавець</label>
-                    <select id="filterAssignee" class="search-select" onchange="applyFilters()">
-                        <option value="">Всі виконавці...</option>
-                        <option th:each="u : ${users}" th:value="${u.username}" th:text="${u.username}"></option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label small text-muted mb-1 fw-bold">Період (Дедлайн)</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light text-muted">З</span>
-                        <input type="date" id="filterDateFrom" class="form-control" onchange="applyFilters()">
-                        <span class="input-group-text bg-light text-muted">По</span>
-                        <input type="date" id="filterDateTo" class="form-control" onchange="applyFilters()">
-                    </div>
-                </div>
-            </div>
+    <div th:replace="~{fragments :: filterAccordion(~{::#taskFilterForm})}">
+        <div id="taskFilterForm">
 
-            <div class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label small text-muted mb-1 fw-bold">Проєкт</label>
-                    <select id="filterProject" class="search-select" onchange="applyFilters()">
-                        <option value="">Всі проєкти...</option>
-                        <option th:each="p : ${projects}" th:value="${p.id}" th:text="${p.name}"></option>
-                    </select>
+                <div class="row g-3 align-items-end mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1 fw-bold">Текст (Назва/Опис)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" id="filterSearch" class="form-control border-start-0 ps-0" placeholder="Введіть слова..." onkeyup="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1 fw-bold">Пріоритет</label>
+                        <select id="filterPriority" class="form-select" onchange="applyFilters()">
+                            <option value="">Всі пріоритети</option>
+                            <option value="LOW">Низький</option>
+                            <option value="MEDIUM">Середній</option>
+                            <option value="HIGH">Високий</option>
+                            <option value="URGENT">Терміновий</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1 fw-bold">Виконавець</label>
+                        <select id="filterAssignee" class="search-select" onchange="applyFilters()">
+                            <option value="">Всі виконавці...</option>
+                            <option th:each="u : ${users}" th:value="${u.username}" th:text="${u.username}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1 fw-bold">Період (Дедлайн)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted">З</span>
+                            <input type="date" id="filterDateFrom" class="form-control" onchange="applyFilters()">
+                            <span class="input-group-text bg-light text-muted">По</span>
+                            <input type="date" id="filterDateTo" class="form-control" onchange="applyFilters()">
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label small text-muted mb-1 fw-bold">Компанія</label>
-                    <select id="filterCompany" class="search-select" onchange="applyFilters()">
-                        <option value="">Всі компанії...</option>
-                        <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}"></option>
-                    </select>
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1 fw-bold">Проєкт</label>
+                        <select id="filterProject" class="search-select" onchange="applyFilters()">
+                            <option value="">Всі проєкти...</option>
+                            <option th:each="p : ${projects}" th:value="${p.id}" th:text="${p.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1 fw-bold">Компанія</label>
+                        <select id="filterCompany" class="search-select" onchange="applyFilters()">
+                            <option value="">Всі компанії...</option>
+                            <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1 fw-bold">Контакт</label>
+                        <select id="filterContact" class="search-select" onchange="applyFilters()">
+                            <option value="">Всі контакти...</option>
+                            <option th:each="ct : ${contacts}" th:value="${ct.id}" th:text="${ct.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-outline-secondary w-100" onclick="clearFilters()" title="Скинути фільтри">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small text-muted mb-1 fw-bold">Контакт</label>
-                    <select id="filterContact" class="search-select" onchange="applyFilters()">
-                        <option value="">Всі контакти...</option>
-                        <option th:each="ct : ${contacts}" th:value="${ct.id}" th:text="${ct.name}"></option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <button class="btn btn-outline-secondary w-100" onclick="clearFilters()" title="Скинути фільтри">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
-                </div>
-            </div>
+
         </div>
     </div>
 

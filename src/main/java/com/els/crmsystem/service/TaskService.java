@@ -3,18 +3,22 @@ package com.els.crmsystem.service;
 import com.els.crmsystem.dto.input.TaskInputDto;
 import com.els.crmsystem.dto.output.TaskOutputDto;
 import com.els.crmsystem.entity.*;
+import com.els.crmsystem.enums.TaskPriority;
 import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.*;
+import com.els.crmsystem.specification.TaskSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -238,11 +242,27 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TaskOutputDto> getAllCompletedTasks(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("dueDate").descending());
-        // You will need to add findByCompletedTrue(Pageable pageable) to TaskRepository!
-        return taskRepository.findByCompletedTrue(pageable)
-                .map(mapper::toOutputDto);
+    public Page<TaskOutputDto> getFilteredArchivedTasks(
+            String searchText, TaskPriority priority, String assignee,
+            Long projectId, Long companyId, Long contactId,
+            LocalDate dateFrom, LocalDate dateTo,
+            int page, int size) {
+
+        // Sort by completedAt so the most recently finished tasks are at the top!
+        Pageable pageable = PageRequest.of(page, size, Sort.by("completedAt").descending());
+
+        // Convert simple dates to exact start/end of day times
+        LocalDateTime fromTime = (dateFrom != null) ? dateFrom.atStartOfDay() : null;
+        LocalDateTime toTime = (dateTo != null) ? dateTo.atTime(23, 59, 59) : null;
+
+        // Build the Specification Lego blocks
+        Specification<Task> spec =
+                TaskSpecification.filterArchivedTasks(
+                        searchText, priority, assignee, projectId, companyId, contactId, fromTime, toTime
+                );
+
+        // Execute query and map to DTOs
+        return taskRepository.findAll(spec, pageable).map(mapper::toOutputDto);
     }
 
     // --- UNIVERSAL TELEGRAM NOTIFICATION BUILDER ---
