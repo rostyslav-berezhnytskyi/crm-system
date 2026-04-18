@@ -33,4 +33,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             Long assigneeId,
             java.time.LocalDateTime endOfPeriod
     );
+
+    // Fetch tasks completed by a specific user within a specific time range
+    List<Task> findByAssigneeIdAndCompletedTrueAndCompletedAtBetween(
+            Long assigneeId,
+            java.time.LocalDateTime start,
+            java.time.LocalDateTime end
+    );
 }

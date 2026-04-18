@@ -41,6 +41,9 @@ public class Task {
     @Column(name = "is_completed", nullable = false)
     private boolean completed = false;
 
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     // --- USERS ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false, updatable = false)

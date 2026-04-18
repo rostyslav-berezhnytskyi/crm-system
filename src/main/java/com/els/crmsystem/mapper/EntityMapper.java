@@ -290,6 +290,7 @@ public class EntityMapper {
                 task.getCreatedAt(),
                 task.getDueDate(),
                 task.isCompleted(),
+                task.getCompletedAt(),
 
                 task.getGroup() != null ? task.getGroup().getId() : null,
                 task.getGroup() != null ? task.getGroup().getName() : null,

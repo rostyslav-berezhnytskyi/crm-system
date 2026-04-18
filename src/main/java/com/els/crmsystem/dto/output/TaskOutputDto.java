@@ -13,6 +13,7 @@ public record TaskOutputDto(
         LocalDateTime createdAt,
         LocalDateTime dueDate,
         boolean completed,
+        LocalDateTime completedAt,
 
         // Flattened relationships (just names/IDs, not full objects)
         Long groupId,

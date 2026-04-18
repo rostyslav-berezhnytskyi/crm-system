@@ -10,10 +10,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 @Service
@@ -25,57 +27,100 @@ public class DailyStandupService {
     private final TaskRepository taskRepository;
     private final AuditNotificationService notificationService;
 
-    // Runs every day at 09:00 AM Kyiv time (Changed from 8!)
-    @Scheduled(cron = "0 0 9 * * ?", zone = "Europe/Kiev")
-//    @Scheduled(fixedRate = 60000)
+    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM");
+
+    // =========================================================================
+    // 1. SCHEDULERS
+    // =========================================================================
+
+    // Weekdays (Mon-Fri) at 09:00
+    @Scheduled(cron = "0 0 9 * * MON-FRI", zone = "Europe/Kiev")
     @Transactional(readOnly = true)
-    public void sendMorningBriefings() {
-        log.info("Starting Daily Morning Briefing generation...");
+    public void sendWeekdayMorningBriefings() {
+        log.info("Running Weekday Morning Briefing...");
+        executeMorningBriefing("🌅 *Добрий ранок, %s!*\nОсь ваш план на сьогодні (%s):\n\n");
+    }
 
-        List<User> usersWithTelegram = userRepository.findAll().stream()
-                .filter(User::isEnabled)
-                .filter(u -> u.getTelegramId() != null && !u.getTelegramId().trim().isEmpty())
-                .toList();
+    // Weekends (Sat-Sun) at 10:30 (Later time, different text)
+    @Scheduled(cron = "0 30 10 * * SAT,SUN", zone = "Europe/Kiev")
+    @Transactional(readOnly = true)
+    public void sendWeekendMorningBriefings() {
+        log.info("Running Weekend Morning Briefing...");
+        executeMorningBriefing("☕ *Добрий ранок вихідного дня, %s!*\nЯкщо ви сьогодні працюєте, ось ваш план (%s):\n\n");
+    }
 
-        // Define our time horizons
+    // Every Evening (Mon-Fri) at 19:00
+    @Scheduled(cron = "0 0 19 * * MON-FRI", zone = "Europe/Kiev")
+    @Transactional(readOnly = true)
+    public void sendEveningWrapUp() {
+        log.info("Running Evening Wrap-Up...");
         LocalDateTime startOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         LocalDateTime endOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
-        LocalDateTime endOfNext7Days = endOfToday.plusDays(7); // The Horizon
 
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM");
+        for (User user : getTelegramUsers()) {
+            List<Task> completedToday = taskRepository.findByAssigneeIdAndCompletedTrueAndCompletedAtBetween(
+                    user.getId(), startOfToday, endOfToday);
 
-        for (User user : usersWithTelegram) {
-            // Fetch everything due up to 7 days from now
+            if (!completedToday.isEmpty()) {
+                StringBuilder msg = new StringBuilder();
+                msg.append("🌙 *Підсумки дня!*\nВи чудово попрацювали сьогодні та закрили *")
+                        .append(completedToday.size()).append("* задач(і):\n\n");
+
+                for (Task t : completedToday) {
+                    msg.append("✅ ").append(t.getTitle()).append("\n");
+                }
+                msg.append("\nГарного вечора! 🍷");
+                notificationService.sendDirectMessage(user.getTelegramId(), msg.toString());
+            }
+        }
+    }
+
+    // Friday Evening (19:05) - Weekly Summary
+    @Scheduled(cron = "0 5 19 * * FRI", zone = "Europe/Kiev")
+    @Transactional(readOnly = true)
+    public void sendWeeklySummary() {
+        log.info("Running Friday Weekly Summary...");
+        LocalDateTime startOfWeek = LocalDateTime.of(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)), LocalTime.MIN);
+        LocalDateTime endOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+
+        for (User user : getTelegramUsers()) {
+            List<Task> completedThisWeek = taskRepository.findByAssigneeIdAndCompletedTrueAndCompletedAtBetween(
+                    user.getId(), startOfWeek, endOfToday);
+
+            if (!completedThisWeek.isEmpty()) {
+                String msg = String.format(
+                        "🏆 *Підсумки тижня!*\nЗа цей тиждень ви успішно виконали *%d* задач(і)!\nДякуємо за роботу та бажаємо чудових вихідних! 🎉",
+                        completedThisWeek.size()
+                );
+                notificationService.sendDirectMessage(user.getTelegramId(), msg);
+            }
+        }
+    }
+
+    // =========================================================================
+    // 2. CORE LOGIC HELPERS
+    // =========================================================================
+
+    private void executeMorningBriefing(String greetingTemplate) {
+        LocalDateTime startOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+        LocalDateTime endOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        LocalDateTime endOfNext7Days = endOfToday.plusDays(7);
+
+        for (User user : getTelegramUsers()) {
             List<Task> tasks = taskRepository.findByAssigneeIdAndCompletedFalseAndDueDateBeforeOrderByDueDateAsc(
                     user.getId(), endOfNext7Days);
 
-            if (tasks.isEmpty()) {
-                continue; // User has absolutely nothing due in the next week. Lucky them!
-            }
+            if (tasks.isEmpty()) continue;
 
-            // Bucket the tasks
-            List<Task> overdueTasks = tasks.stream()
-                    .filter(t -> t.getDueDate().isBefore(startOfToday))
-                    .toList();
+            List<Task> overdueTasks = tasks.stream().filter(t -> t.getDueDate().isBefore(startOfToday)).toList();
+            List<Task> todayTasks = tasks.stream().filter(t -> !t.getDueDate().isBefore(startOfToday) && !t.getDueDate().isAfter(endOfToday)).toList();
+            List<Task> upcomingTasks = tasks.stream().filter(t -> t.getDueDate().isAfter(endOfToday)).toList();
 
-            List<Task> todayTasks = tasks.stream()
-                    .filter(t -> !t.getDueDate().isBefore(startOfToday) && !t.getDueDate().isAfter(endOfToday))
-                    .toList();
+            if (overdueTasks.isEmpty() && todayTasks.isEmpty()) continue;
 
-            List<Task> upcomingTasks = tasks.stream()
-                    .filter(t -> t.getDueDate().isAfter(endOfToday))
-                    .toList();
-
-            // Skip sending a message if they ONLY have future tasks (no need to bother them today)
-            if (overdueTasks.isEmpty() && todayTasks.isEmpty()) {
-                continue;
-            }
-
-            // Build the message
             StringBuilder message = new StringBuilder();
-            message.append("🌅 *Добрий ранок, ").append(user.getUsername()).append("!*\n");
-            message.append("Ось ваш план на сьогодні (").append(LocalDate.now().format(dateFormatter)).append("):\n\n");
+            message.append(String.format(greetingTemplate, user.getUsername(), LocalDate.now().format(dateFormatter)));
 
             if (!overdueTasks.isEmpty()) {
                 message.append("🔴 *Прострочено (").append(overdueTasks.size()).append("):*\n");
@@ -95,7 +140,6 @@ public class DailyStandupService {
                 message.append("✅ На сьогодні немає термінових задач.\n\n");
             }
 
-            // The "Horizon" Summary
             if (!upcomingTasks.isEmpty()) {
                 message.append("🗓 *Анонс:* У вас заплановано ще *")
                         .append(upcomingTasks.size())
@@ -103,10 +147,14 @@ public class DailyStandupService {
             }
 
             message.append("Вдалого дня! ⚡️");
-
             notificationService.sendDirectMessage(user.getTelegramId(), message.toString());
         }
+    }
 
-        log.info("Daily Morning Briefings sent successfully.");
+    private List<User> getTelegramUsers() {
+        return userRepository.findAll().stream()
+                .filter(User::isEnabled)
+                .filter(u -> u.getTelegramId() != null && !u.getTelegramId().trim().isEmpty())
+                .toList();
     }
 }

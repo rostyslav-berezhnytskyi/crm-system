@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -136,8 +137,17 @@ public class TaskService {
     public void toggleTaskCompletion(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+
         // Flip the boolean (if true -> false, if false -> true)
         task.setCompleted(!task.isCompleted());
+
+        // --- RECORD THE EXACT TIME IT WAS COMPLETED ---
+        if (task.isCompleted()) {
+            task.setCompletedAt(java.time.LocalDateTime.now());
+        } else {
+            task.setCompletedAt(null); // Clear it if they un-check "Done"
+        }
+
         taskRepository.save(task);
     }
 
