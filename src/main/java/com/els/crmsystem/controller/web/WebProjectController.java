@@ -187,8 +187,23 @@ public class WebProjectController {
     // EQUIPMENT ENDPOINTS
     // ==========================================
     @PostMapping("/projects/{id}/equipment")
-    public String addEquipment(@PathVariable Long id, @ModelAttribute EquipmentInputDto dto) {
-        equipmentService.addEquipmentToProject(id, dto);
+    public String saveOrUpdateEquipment(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long equipmentId,
+            @RequestParam String name,
+            @RequestParam(required = false) String serialNumber,
+            @RequestParam(required = false) Integer warrantyMonths,
+            @RequestParam(required = false) String notes) {
+
+        if (equipmentId != null) {
+            // Edit existing equipment!
+            equipmentService.updateEquipment(equipmentId, name, serialNumber, warrantyMonths, notes);
+        } else {
+            // Create brand new equipment!
+            EquipmentInputDto dto = new EquipmentInputDto(name, serialNumber, warrantyMonths, notes);
+            equipmentService.addEquipmentToProject(id, dto);
+        }
+
         return "redirect:/projects/" + id;
     }
 

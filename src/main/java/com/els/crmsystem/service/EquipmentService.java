@@ -47,4 +47,17 @@ public class EquipmentService {
     public void deleteEquipment(Long equipmentId) {
         equipmentRepository.deleteById(equipmentId);
     }
+
+    @Transactional
+    public void updateEquipment(Long equipmentId, String name, String serialNumber, Integer warrantyMonths, String notes) {
+        Equipment equipment = equipmentRepository.findById(equipmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Equipment not found"));
+
+        equipment.setName(name);
+        equipment.setSerialNumber(serialNumber);
+        equipment.setWarrantyMonths(warrantyMonths);
+        equipment.setNotes(notes);
+
+        equipmentRepository.save(equipment);
+    }
 }
