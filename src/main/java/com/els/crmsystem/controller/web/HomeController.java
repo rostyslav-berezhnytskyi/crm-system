@@ -6,11 +6,13 @@ import com.els.crmsystem.service.ExchangeRateService;
 import com.els.crmsystem.service.FinanceService;
 import com.els.crmsystem.service.ProjectService;
 import com.els.crmsystem.service.TransactionService;
+import com.els.crmsystem.service.TaskService; // ADDED THIS
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.security.Principal; // ADDED THIS
 import java.util.Comparator;
 import java.util.List;
 
@@ -22,10 +24,11 @@ public class HomeController {
     private final TransactionService transactionService;
     private final FinanceService financeService;
     private final ExchangeRateService exchangeRateService;
+    private final TaskService taskService; // ADDED THIS
 
     @GetMapping("/")
-    public String showDashboard(Model model) {
-        // 1. Fetch all transactions (using your existing filter method with all nulls)
+    public String showDashboard(Model model, Principal principal) { // ADDED PRINCIPAL TO GET LOGGED-IN USER
+        // 1. Fetch all transactions
         List<TransactionOutputDto> allTransactions = transactionService.getAllFilteredTransactions(
                 null, null, null, null, null, null, null, null, null);
 
@@ -58,6 +61,9 @@ public class HomeController {
                 .filter(p -> p.latitude() != null && p.longitude() != null)
                 .toList();
         model.addAttribute("mapProjects", mapProjects);
+
+        // 5. NEW: Fetch My Tasks for Today!
+        model.addAttribute("myTasks", taskService.getMyPendingTasksForToday(principal.getName()));
 
         return "index";
     }

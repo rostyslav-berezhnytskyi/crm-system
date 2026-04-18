@@ -382,4 +382,18 @@ public class TaskService {
             }
         }
     }
+
+    @Transactional(readOnly = true)
+    public List<TaskOutputDto> getMyPendingTasksForToday(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // "Today" means anything due before 23:59:59 tonight (plus overdue from yesterday)
+        java.time.LocalDateTime endOfToday = java.time.LocalDateTime.of(java.time.LocalDate.now(), java.time.LocalTime.MAX);
+
+        return taskRepository.findByAssigneeIdAndCompletedFalseAndDueDateBeforeOrderByDueDateAsc(user.getId(), endOfToday)
+                .stream()
+                .map(mapper::toOutputDto)
+                .toList();
+    }
 }
