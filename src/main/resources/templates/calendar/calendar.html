@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments :: head('ELS CRM - Календар')}">
+</head>
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+<style>
+    #calendar {
+        max-width: 100%;
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        font-family: inherit;
+    }
+
+    /* Bold, black grid borders */
+    .fc-theme-standard td, .fc-theme-standard th {
+        border-color: #000000 !important;
+    }
+
+    /* Style the day headers (Mon, Tue, etc.) */
+    .fc-col-header-cell {
+        background-color: #f8f9fa;
+        padding: 12px 0 !important;
+        color: #212529; /* Darker text */
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        font-weight: 800;
+        border-bottom: 2px solid #000000 !important; /* Thicker black line under headers */
+    }
+
+    /* Fix the ugly blue underlined day numbers */
+    .fc-daygrid-day-number {
+        color: #000000 !important; /* Pure black numbers */
+        text-decoration: none !important;
+        font-weight: 700;
+        padding: 8px 10px !important;
+    }
+
+    /* 1. Shaded Weekends (MUST come first!) */
+    .fc-day-sat, .fc-day-sun {
+        background-color: #e6f2ff !important; /* Slightly deeper soft blue */
+    }
+
+    /* 2. Highlight today (MUST come second to override weekends!) */
+    .fc-day-today {
+        background-color: #ffda9e !important; /* Stronger, brighter warm orange */
+    }
+
+    /* Beautiful Event Pills */
+    .fc-event {
+        cursor: pointer;
+        border: none !important;
+        border-radius: 6px !important;
+        padding: 4px 6px !important;
+        font-size: 0.8rem !important;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        margin: 2px 4px !important;
+        transition: transform 0.1s ease;
+    }
+    .fc-event:hover {
+        transform: scale(1.02);
+        opacity: 0.9;
+    }
+
+    /* Toolbar Buttons */
+    .fc-button-primary {
+        background-color: #ffffff !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+        font-weight: 600 !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .fc-button-primary:hover {
+        background-color: #f8f9fa !important;
+    }
+    .fc-button-active {
+        background-color: #e9ecef !important;
+        color: #212529 !important;
+        border-color: #ced4da !important;
+    }
+    .fc-toolbar-title {
+        font-weight: 800 !important;
+        color: #212529;
+    }
+
+    /* ========================================= */
+    /* MOBILE RESPONSIVENESS FIXES               */
+    /* ========================================= */
+    @media (max-width: 768px) {
+        #calendar {
+            padding: 10px;
+        }
+        .fc-toolbar {
+            flex-direction: column;
+            gap: 12px;
+        }
+        .fc-toolbar-title {
+            font-size: 1.25rem !important;
+            text-align: center;
+        }
+        .fc-header-toolbar .fc-toolbar-chunk {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* FIX: Prevent bold borders from crushing numbers on phones */
+        .fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid {
+            border-width: 1px !important;
+        }
+
+        /* FIX: Shrink the text and padding so it fits neatly inside the small boxes */
+        .fc-daygrid-day-number {
+            padding: 4px 6px !important;
+            font-size: 0.85rem !important;
+        }
+        .fc-col-header-cell {
+            padding: 8px 0 !important;
+            font-size: 0.75rem !important;
+        }
+
+        /* Make event pills slightly smaller to fit narrow columns */
+        .fc-event {
+            font-size: 0.7rem !important;
+            padding: 2px 4px !important;
+        }
+    }
+</style>
+
+<body class="bg-light">
+
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container-fluid px-3 px-md-4 mt-4 mb-5">
+
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
+        <div>
+            <h2 class="mb-0 text-dark fw-bold">📅 Календар планування</h2>
+            <p class="text-muted mb-0">Задачі, транзакції та події.</p>
+        </div>
+        <button class="btn btn-primary shadow-sm fw-bold px-4 py-2" style="border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#eventModal">
+            <i class="bi bi-calendar-plus me-1"></i> Додати подію
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">📌 Додати подію/нагадування</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Назва події *</label>
+                    <input type="text" id="eventTitle" class="form-control" placeholder="Відпустка, Зустріч..." required>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold text-muted small">Дата початку *</label>
+                        <input type="date" id="eventStart" class="form-control" required>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold text-muted small">Дата завершення</label>
+                        <input type="date" id="eventEnd" class="form-control">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Колір на календарі</label>
+                    <input type="color" id="eventColor" class="form-control form-control-color w-100" value="#8540f5">
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" onclick="saveManualEvent()">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{tasks/components :: modals}"></div>
+<div th:replace="~{tasks/components :: scripts}"></div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<script>
+    let calendar;
+
+    // Grab the CSRF tokens from the <meta> tags we added at the top
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'uk',
+            firstDay: 1,
+            height: 'auto', // Adjusts height nicely
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek'
+            },
+            buttonText: {
+                today: 'Сьогодні',
+                month: 'Місяць',
+                week: 'Тиждень',
+                list: 'Список'
+            },
+            // ADD THIS BLOCK: Forces 24-hour time format (e.g., 14:30)
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            },
+            events: '/api/calendar/events',
+
+            // Handle clicking on an event
+            eventClick: function(info) {
+                info.jsEvent.preventDefault(); // Stop standard browser navigation
+
+                if (info.event.extendedProps.type === 'TASK') {
+                    // MAGIC: Create a fake element with the ID, and pass it to your existing Task JS!
+                    const taskId = info.event.id.replace('TSK_', '');
+                    const fakeElement = document.createElement('div');
+                    fakeElement.setAttribute('data-task-id', taskId);
+                    openTaskDetails(fakeElement); // This function lives in tasks/components!
+
+                } else if (info.event.extendedProps.type === 'TRANSACTION') {
+                    // Go to ledger
+                    window.open(info.event.url, '_self');
+
+                } else if (info.event.extendedProps.type === 'EVENT') {
+                    // Manual Event - Allow Deletion
+                    if (confirm(`Видалити подію "${info.event.title}"?`)) {
+                        deleteManualEvent(info.event.id.replace("EVT_", ""));
+                    }
+                }
+            }
+        });
+
+        calendar.render();
+    });
+
+    // --- SECURE AJAX Functions ---
+
+    function saveManualEvent() {
+        const title = document.getElementById('eventTitle').value;
+        const start = document.getElementById('eventStart').value;
+        const end = document.getElementById('eventEnd').value;
+        const color = document.getElementById('eventColor').value;
+
+        if (!title || !start) {
+            alert('Назва та Дата початку обов\'язкові!');
+            return;
+        }
+
+        const payload = {
+            title: title,
+            startDate: start + "T00:00:00",
+            endDate: end ? (end + "T23:59:59") : null,
+            color: color
+        };
+
+        fetch('/api/calendar/events', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken // <-- THIS FIXES THE SAVE ERROR!
+            },
+            body: JSON.stringify(payload)
+        }).then(response => {
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+                calendar.refetchEvents();
+            } else {
+                alert("Помилка збереження. Перевірте консоль.");
+            }
+        });
+    }
+
+    function deleteManualEvent(id) {
+        fetch('/api/calendar/events/' + id, {
+            method: 'DELETE',
+            headers: {
+                [csrfHeader]: csrfToken // <-- Needed for delete too!
+            }
+        }).then(response => {
+            if (response.ok) {
+                calendar.refetchEvents();
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

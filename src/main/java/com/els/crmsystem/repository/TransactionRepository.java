@@ -36,4 +36,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             LocalDateTime startOfDay,
             LocalDateTime endOfDay
     );
+
+    List<Transaction> findByDateBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
 }
