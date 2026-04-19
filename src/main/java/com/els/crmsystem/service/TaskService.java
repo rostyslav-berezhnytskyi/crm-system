@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,11 +123,13 @@ public class TaskService {
         taskRepository.save(task);
 
         // 3. Update the displayOrder for EVERY task in that column
-        // based on the array sent by the frontend JavaScript
+        // based on the array sent by the frontend JavaScript.
+        // Guard: only reorder tasks that actually belong to the target group
+        // to prevent a client sending foreign task IDs and corrupting other columns.
         for (int i = 0; i < orderedTaskIdsInNewGroup.size(); i++) {
             Long id = orderedTaskIdsInNewGroup.get(i);
             Task t = taskRepository.findById(id).orElse(null);
-            if (t != null) {
+            if (t != null && newGroupId.equals(t.getGroup() != null ? t.getGroup().getId() : null)) {
                 t.setDisplayOrder(i + 1); // 1, 2, 3, 4...
                 taskRepository.save(t);
             }
@@ -338,7 +341,7 @@ public class TaskService {
 
         // Security Check: Only the author can edit
         if (!comment.getAuthor().getUsername().equals(currentUsername)) {
-            throw new SecurityException("You can only edit your own comments");
+            throw new AccessDeniedException("You can only edit your own comments");
         }
 
         comment.setText(newText);
@@ -352,7 +355,7 @@ public class TaskService {
 
         // Security Check: Only the author can delete
         if (!comment.getAuthor().getUsername().equals(currentUsername)) {
-            throw new SecurityException("You can only delete your own comments");
+            throw new AccessDeniedException("You can only delete your own comments");
         }
 
         commentRepository.delete(comment);

@@ -7,6 +7,7 @@ import com.els.crmsystem.service.TaskGroupService;
 import com.els.crmsystem.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +32,7 @@ public class TaskRestController {
     }
 
     // 2. Delete a task via AJAX
+    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
@@ -71,6 +73,7 @@ public class TaskRestController {
         return ResponseEntity.ok().body("File uploaded successfully");
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTask(@PathVariable Long id, @RequestBody TaskInputDto dto) {
         // Ми просто перевикористаємо логіку сервісу.
@@ -86,24 +89,28 @@ public class TaskRestController {
     // We need to inject TaskGroupService at the top of the class first!
     // private final com.els.crmsystem.service.TaskGroupService groupService;
 
+    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER')")
     @PostMapping("/groups")
     public ResponseEntity<?> createGroup(@RequestParam String name, @RequestParam(required = false) String colorHex) {
         groupService.createGroup(name, colorHex);
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER')")
     @PutMapping("/groups/{id}")
     public ResponseEntity<?> updateGroup(@PathVariable Long id, @RequestParam String name) {
         groupService.updateGroupName(id, name);
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER')")
     @DeleteMapping("/groups/{id}")
     public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
         groupService.deleteGroup(id);
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR','MANAGER')")
     @PutMapping("/groups/reorder")
     public ResponseEntity<?> reorderGroups(@RequestBody List<Long> orderedGroupIds) {
         groupService.updateGroupPositions(orderedGroupIds);

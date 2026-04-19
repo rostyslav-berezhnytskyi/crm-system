@@ -1,5 +1,6 @@
 package com.els.crmsystem.controller.api;
 
+import com.els.crmsystem.dto.input.CalendarEventInputDto;
 import com.els.crmsystem.dto.output.CalendarEventDto;
 import com.els.crmsystem.entity.CalendarEvent;
 import com.els.crmsystem.entity.Task;
@@ -7,10 +8,11 @@ import com.els.crmsystem.entity.Transaction;
 import com.els.crmsystem.repository.CalendarEventRepository;
 import com.els.crmsystem.repository.TaskRepository;
 import com.els.crmsystem.repository.TransactionRepository;
-import lombok.Builder;
-import lombok.Data;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -111,13 +113,21 @@ public class CalendarRestController {
     // --- Endpoints for managing the Manual Notes ---
 
     @PostMapping("/events")
-    public void createEvent(@RequestBody CalendarEvent event) {
-        if (event.getColor() == null) event.setColor("#8540f5");
+    public void createEvent(@Valid @RequestBody CalendarEventInputDto dto) {
+        CalendarEvent event = new CalendarEvent();
+        event.setTitle(dto.title());
+        event.setDescription(dto.description());
+        event.setStartDate(dto.startDate());
+        event.setEndDate(dto.endDate());
+        event.setColor(dto.color() != null ? dto.color() : "#8540f5");
+        // NOTE: ID is never set here — JPA will always INSERT, never silently UPDATE
         calendarEventRepository.save(event);
     }
 
     @DeleteMapping("/events/{id}")
     public void deleteEvent(@PathVariable Long id) {
+        calendarEventRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
         calendarEventRepository.deleteById(id);
     }
 }

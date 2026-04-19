@@ -53,12 +53,12 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
 
                         // 2. GOD MODE (Users)
-                        .requestMatchers("/register", "/users", "/users/**").hasRole("ADMIN")
+                        .requestMatchers("/register", "/users", "/users/**", "/api/users", "/api/users/**").hasRole("ADMIN")
 
                         // 3. PIPELINE, MONEY & CRM ZONE (Management Only)
                         .requestMatchers(
                                 "/", "/pipeline",
-                                "/transactions", "/transactions/**",
+                                "/transactions", "/transactions/**", "/api/transactions", "/api/transactions/**",
                                 "/contacts", "/contacts/**",
                                 "/companies", "/companies/**"
                         ).hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")

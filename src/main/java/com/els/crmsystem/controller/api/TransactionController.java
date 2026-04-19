@@ -1,16 +1,12 @@
 package com.els.crmsystem.controller.api;
 
 import com.els.crmsystem.dto.input.TransactionInputDto;
-import com.els.crmsystem.entity.Transaction;
 import com.els.crmsystem.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType; // Import this!
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,8 +24,7 @@ public class TransactionController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createTransaction(@Valid @ModelAttribute TransactionInputDto dto) {
 
-        // Hardcoded 'admin' for now (Make sure this user exists in DB!)
-        String currentUsername = "admin";
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
         transactionService.createTransaction(dto, currentUsername);
 

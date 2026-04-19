@@ -12,11 +12,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 @Service
 public class FileStorageService {
+
+    // --- SECURITY: ALLOWED FILE EXTENSIONS ---
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            ".jpg", ".jpeg", ".png", ".gif", ".webp",   // images
+            ".pdf", ".xlsx", ".xls", ".docx", ".doc",   // documents
+            ".mp4", ".mov", ".avi", ".mkv",             // video
+            ".txt", ".csv"                              // standard text/data
+    );
 
     private final Path fileStorageLocation;
 
@@ -55,6 +64,11 @@ public class FileStorageService {
             String extension = originalFileName.contains(".")
                     ? originalFileName.substring(originalFileName.lastIndexOf("."))
                     : ".jpg";
+
+            if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+                throw new RuntimeException("Блокування безпеки: Недопустимий формат файлу (" + extension + ").");
+            }
+
             String uniqueFileName = UUID.randomUUID().toString() + extension;
             Path targetLocation = targetDirectory.resolve(uniqueFileName);
 
