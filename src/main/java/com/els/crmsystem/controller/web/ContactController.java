@@ -39,6 +39,7 @@ public class ContactController {
     private final TaskService taskService;
     private final TaskGroupService taskGroupService;
     private final UserService userService;
+    private final ProjectService projectService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -125,7 +126,7 @@ public class ContactController {
         model.addAttribute("users", userService.findAllActiveUsers());
 
         // Pass empty lists for heavy data. We will handle them in JS!
-        model.addAttribute("projects", java.util.Collections.emptyList());
+        model.addAttribute("projects", projectService.getAllActiveProjects());
         model.addAttribute("companies", java.util.Collections.emptyList());
         model.addAttribute("contacts", java.util.Collections.emptyList());
 

@@ -39,6 +39,7 @@ public class CompanyController {
     private final TaskService taskService;
     private final TaskGroupService taskGroupService;
     private final UserService userService;
+    private final ProjectService projectService;
 
     // --- AUTOMATIC DROPDOWNS ---
     @ModelAttribute("roles")
@@ -107,7 +108,7 @@ public class CompanyController {
         model.addAttribute("users", userService.findAllActiveUsers());
 
         // Fast-loading empty lists for the heavy data
-        model.addAttribute("projects", java.util.Collections.emptyList());
+        model.addAttribute("projects", projectService.getAllActiveProjects());
         model.addAttribute("companies", java.util.Collections.emptyList());
         model.addAttribute("contacts", java.util.Collections.emptyList());
         return "companies/view";
