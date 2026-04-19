@@ -11,7 +11,7 @@ public enum ContactRole {
     INSTALLER("Installer", "Монтажник"),    // External installation teams
     MANAGER("Manager", "Менеджер"),      // Project managers or partners
     OTHER("Other", "Інше"),         // Catch-all
-    LEAD("Лід", "Лід"),             // Cold lead in the sales pipeline
+    LEAD("Lead", "Лід"),             // Cold lead in the sales pipeline
     PROSPECT("Prospect", "Потенційний клієнт (Лід)"); // Warm prospect in the sales pipeline
 
     private final String englishName;

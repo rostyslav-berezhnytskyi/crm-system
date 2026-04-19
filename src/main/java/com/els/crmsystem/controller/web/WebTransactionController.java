@@ -218,33 +218,24 @@ public class WebTransactionController {
         model.addAttribute("types", TransactionType.values());
         model.addAttribute("paymentMethods", PaymentMethod.values());
 
-        // --- NEW: Full lists for the Filter Bar ---
+        // Full lists for the Filter Bar (keep these)
         model.addAttribute("companies", companyService.getAllActiveCompanies());
         model.addAttribute("contacts", contactService.getAllActiveContacts());
-        // ----------------------------------------
 
-        // 1. SPLIT CATEGORIES
+        // 1. SPLIT CATEGORIES (Keep this, categories still depend on Income/Expense)
         model.addAttribute("incomeCategories", java.util.Arrays.stream(TransactionCategory.values())
                 .filter(c -> c.getType() == TransactionType.INCOME).toList());
         model.addAttribute("expenseCategories", java.util.Arrays.stream(TransactionCategory.values())
                 .filter(c -> c.getType() == TransactionType.EXPENSE).toList());
 
-        // 2. INCOME COUNTERPARTIES (Only Clients)
-        model.addAttribute("incomeCompanies", companyService.getAllActiveCompanies().stream()
-                .filter(c -> c.role() == com.els.crmsystem.enums.CompanyRole.CLIENT).toList());
-        model.addAttribute("incomeContacts", contactService.getAllActiveContacts().stream()
-                .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.CLIENT).toList());
+        // 2. UNIFIED COUNTERPARTIES (All Active EXCEPT Leads & Prospects)
+        model.addAttribute("validCompanies", companyService.getAllActiveCompanies().stream()
+                .filter(c -> c.role() != com.els.crmsystem.enums.CompanyRole.LEAD &&
+                        c.role() != com.els.crmsystem.enums.CompanyRole.PROSPECT).toList());
 
-        // 3. EXPENSE COUNTERPARTIES (Dealers, Installers, Managers)
-        model.addAttribute("expenseCompanies", companyService.getAllActiveCompanies().stream()
-                .filter(c -> c.role() == com.els.crmsystem.enums.CompanyRole.DEALER ||
-                        c.role() == com.els.crmsystem.enums.CompanyRole.SUBCONTRACTOR).toList());
-        model.addAttribute("expenseContacts", contactService.getAllActiveContacts().stream()
-                .filter(c -> c.role() == com.els.crmsystem.enums.ContactRole.DEALER ||
-                        c.role() == com.els.crmsystem.enums.ContactRole.INSTALLER ||
-                        (c.role() == com.els.crmsystem.enums.ContactRole.MANAGER &&
-                                c.companyName() != null &&
-                                c.companyName().toUpperCase().contains("ELS"))).toList());
+        model.addAttribute("validContacts", contactService.getAllActiveContacts().stream()
+                .filter(c -> c.role() != com.els.crmsystem.enums.ContactRole.LEAD &&
+                        c.role() != com.els.crmsystem.enums.ContactRole.PROSPECT).toList());
     }
 
     // --- EXCEL EXPORT ---

@@ -3,6 +3,7 @@ package com.els.crmsystem.service;
 import com.els.crmsystem.dto.input.CompanyInputDto;
 import com.els.crmsystem.dto.output.CompanyOutputDto;
 import com.els.crmsystem.entity.Company;
+import com.els.crmsystem.enums.CompanyRole;
 import com.els.crmsystem.mapper.EntityMapper;
 import com.els.crmsystem.repository.CompanyRepository;
 import com.els.crmsystem.specification.CompanySpecification;
@@ -106,7 +107,7 @@ public class CompanyService {
     // 🔍 DYNAMIC FILTERING & SORTING FOR COMPANIES
     public Page<CompanyOutputDto> getFilteredAndSortedCompanies(
             String name,
-            com.els.crmsystem.enums.CompanyRole role,
+            CompanyRole role,
             int page,
             int size,
             String sortField,
@@ -125,9 +126,9 @@ public class CompanyService {
         return companyRepository.findAll(spec, pageable).map(entityMapper::toOutputDto);
     }
 
-    public List<CompanyOutputDto> getAllFilteredCompanies(String name, com.els.crmsystem.enums.CompanyRole role) {
-        org.springframework.data.jpa.domain.Specification<Company> spec =
-                com.els.crmsystem.specification.CompanySpecification.filterBy(name, role, true);
+    public List<CompanyOutputDto> getAllFilteredCompanies(String name, CompanyRole role) {
+        Specification<Company> spec =
+                CompanySpecification.filterBy(name, role, true);
         return companyRepository.findAll(spec).stream()
                 .map(entityMapper::toOutputDto)
                 .collect(Collectors.toList());
@@ -135,10 +136,10 @@ public class CompanyService {
 
     // 🔭 PIPELINE: fetch only LEAD and PROSPECT companies
     public List<CompanyOutputDto> getPipelineCompanies() {
-        org.springframework.data.jpa.domain.Specification<Company> spec =
-                com.els.crmsystem.specification.CompanySpecification.filterByPipeline(true);
+        Specification<Company> spec =
+                CompanySpecification.filterByPipeline(true);
         return companyRepository.findAll(spec,
-                org.springframework.data.domain.Sort.by("name").ascending()).stream()
+                Sort.by("name").ascending()).stream()
                 .map(entityMapper::toOutputDto)
                 .collect(Collectors.toList());
     }
