@@ -15,6 +15,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
@@ -26,14 +30,21 @@ public class SecurityConfig {
     private String rememberMeKey;
 
     private final CustomUserDetailsService userDetailsService;
+    private final DataSource dataSource; // <-- Needed for secure Remember-Me
 
-    // 1. The Password Encoder Bean (BCrypt)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 2. The Filter Chain (The Rules)
+    // High-Security Persistent Token Repository
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository() {
+        JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
+        tokenRepository.setDataSource(dataSource);
+        return tokenRepository;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -43,51 +54,47 @@ public class SecurityConfig {
 
                         // 2. GOD MODE (Users)
                         .requestMatchers("/register", "/users", "/users/**").hasRole("ADMIN")
-                        .requestMatchers("/").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER") // <-- Блокує доступ Монтажникам до фінансів
 
-                        // 3. MONEY & CRM ZONE (Transactions, Contacts, Companies)
+                        // 3. PIPELINE, MONEY & CRM ZONE (Management Only)
                         .requestMatchers(
+                                "/", "/pipeline",
                                 "/transactions", "/transactions/**",
                                 "/contacts", "/contacts/**",
                                 "/companies", "/companies/**"
                         ).hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
 
-                        // 4. PROJECT CREATION & MANAGEMENT (Суворо для Керівництва)
-                        .requestMatchers(HttpMethod.POST, "/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER") // <-- Закриває дірку з POST
+                        // 4. PROJECT MANAGEMENT (Write Access - Management Only)
+                        .requestMatchers(HttpMethod.POST, "/projects", "/projects/**").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/projects/**").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/projects/**").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
                         .requestMatchers(
-                                "/projects/new",
-                                "/projects/edit/**",
-                                "/projects/update/**",
-                                "/projects/delete/**",
-                                "/projects/*/equipment",
-                                "/projects/equipment/*/delete",
-                                "/projects/*/contacts/add",
-                                "/projects/*/contacts/*/remove"
+                                "/projects/new", "/projects/edit/**"
                         ).hasAnyRole("ADMIN", "DIRECTOR", "MANAGER")
 
-                        // 5. VIEWING THE PROJECT LIST
-                        // (Guests/Clients are allowed to see the main list if you want them to)
+                        // 5. CALENDAR & TASKS (Management + Installers)
+                        .requestMatchers(
+                                "/tasks", "/tasks/**", "/api/tasks/**",
+                                "/calendar", "/calendar/**", "/api/calendar/**"
+                        ).hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER")
+
+                        // 6. OPERATIONAL ZONE (Read Access & File Uploads - Management + Installers + Guests)
                         .requestMatchers(HttpMethod.GET, "/projects").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER", "GUEST")
+                        .requestMatchers("/projects/**", "/uploads/**").hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER")
 
-                        // 6. OPERATIONAL ZONE (View Projects, Upload Photos)
-                        // INSTALLER is allowed here.
-                        .requestMatchers("/projects/**", "/uploads/**")
-                        .hasAnyRole("ADMIN", "DIRECTOR", "MANAGER", "INSTALLER")
-
-                        // 7. CATCH-ALL FOR GUESTS
+                        // 7. CATCH-ALL
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
+                        .defaultSuccessUrl("/", false) // <-- FIXED: Safer fallback redirect
                         .permitAll()
                 )
-                // --- REMEMBER ME CONFIGURATION ---
                 .rememberMe(remember -> remember
-                        .key(rememberMeKey)
-                        .tokenValiditySeconds(86400) // 1 day
-                        .userDetailsService(userDetailsService)
-                        .alwaysRemember(true)
+                                .key(rememberMeKey)
+                                .tokenValiditySeconds(86400) // 1 day
+                                .tokenRepository(persistentTokenRepository()) // <-- FIXED: Uses database instead of stateless cookie
+                                .userDetailsService(userDetailsService)
+                        // .alwaysRemember(true) <-- DELETED: As requested by the audit
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -99,15 +106,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 3. Connect UserLoader to Security
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
-
-        // Line 2: Sets the Password Encryptor
         authProvider.setPasswordEncoder(passwordEncoder());
-
         return authProvider;
     }
 

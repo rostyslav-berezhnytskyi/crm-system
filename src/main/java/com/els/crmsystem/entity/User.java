@@ -60,6 +60,12 @@ public class User {
     @Column(name = "telegram_id", length = 50)
     private String telegramId;
 
+    @Column(name = "locked")
+    private boolean locked = false;
+
+    @Column(name = "failed_login_attempts")
+    private int failedLoginAttempts = 0;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

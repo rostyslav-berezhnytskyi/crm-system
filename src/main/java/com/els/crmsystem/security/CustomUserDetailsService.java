@@ -19,19 +19,16 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 1. Find user in OUR database
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        // 2. Translate to SPRING'S internal User object
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
-                user.getPassword(), // This MUST be the hashed password
+                user.getPassword(),
                 user.isEnabled(),
                 true, // accountNonExpired
                 true, // credentialsNonExpired
-                true, // accountNonLocked
-                // Convert our Enum Role to Spring Authority
+                !user.isLocked(), // <-- CRITICAL FIX: Reads from Database!
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
     }

@@ -107,10 +107,18 @@ public class UserService {
         user.setRole(dto.role());
         user.setEnabled(dto.enabled());
 
+        // Manage Lockout Status
+        if (dto.locked() != null) {
+            user.setLocked(dto.locked());
+            if (!dto.locked()) {
+                user.setFailedLoginAttempts(0); // Reset the strikes if we unlock them
+            }
+        }
+
         // 3. Only hash and update password IF the admin typed a new one
         if (dto.newPassword() != null && !dto.newPassword().isBlank()) {
-            if (dto.newPassword().length() < 6) {
-                throw new RuntimeException("Password must be at least 6 characters.");
+            if (dto.newPassword().length() < 12) {
+                throw new RuntimeException("Password must be at least 12 characters.");
             }
             user.setPassword(passwordEncoder.encode(dto.newPassword()));
         }

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,5 +57,16 @@ public class GlobalExceptionHandler {
 
         // 5. Redirect to our custom 500 Error HTML page
         return "error/500";
+    }
+
+    // 2. TELEGRAM ALERT FOR 403 FORBIDDEN (Someone trying to access restricted pages)
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public String handleAccessDeniedException(AccessDeniedException ex, HttpServletRequest request) {
+        String errorUrl = request.getRequestURI();
+        logger.warn("Access Denied (403) at URL: {}", errorUrl);
+
+        auditService.notifyCriticalAlert("🛑 Спроба доступу до забороненої сторінки (403)! \nСторінка: %s", errorUrl);
+        return "error/403";
     }
 }

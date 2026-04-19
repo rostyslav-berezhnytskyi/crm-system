@@ -50,14 +50,14 @@ class UserServiceIntegrationTest {
     // Helpers
     // ---------------------------------------------------------------------------
 
-    /** Creates and saves a user directly via the repository (bypasses the service). */
     private User seedUser(String username, String email, Role role) {
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode("seed-password-123"));
+        user.setPassword(passwordEncoder.encode("seed-password-123456"));
         user.setEmail(email);
         user.setRole(role);
         user.setEnabled(true);
+        user.setLocked(false); // <-- Added
         return userRepository.save(user);
     }
 
@@ -67,7 +67,14 @@ class UserServiceIntegrationTest {
 
     private UserEditDto editDto(String username, String email, Role role,
                                 boolean enabled, String newPassword) {
-        return new UserEditDto(username, email, "+380 50 000 0001", null, role, enabled, newPassword);
+        // <-- Added 'false' for the locked parameter to fix compilation
+        return new UserEditDto(username, email, "+380 50 000 0001", null, role, enabled, false, newPassword);
+    }
+
+    private UserEditDto editDtoWithLock(String username, String email, Role role,
+                                        boolean enabled, boolean locked, String newPassword) {
+        // <-- New helper for testing the unlock feature
+        return new UserEditDto(username, email, "+380 50 000 0001", null, role, enabled, locked, newPassword);
     }
 
     // ===========================================================================
@@ -177,10 +184,12 @@ class UserServiceIntegrationTest {
         @DisplayName("updates all basic fields: username, email, phone, role, enabled")
         void updatesAllBasicFields() {
             User user = seedUser("judy", "judy@test.com", Role.GUEST);
+
+            // ВАЖЛИВО: Додано 'false' (7-й параметр) для нового поля locked
             UserEditDto dto = new UserEditDto(
                     "judy-updated", "judy-new@test.com",
                     "+380 67 111 2233", "tg-123",
-                    Role.MANAGER, false, null);
+                    Role.MANAGER, false, false, null);
 
             userService.adminUpdateUser(user.getId(), dto, null);
 
@@ -244,36 +253,36 @@ class UserServiceIntegrationTest {
         }
 
         @Test
-        @DisplayName("newPassword shorter than 6 characters → throws RuntimeException")
+        @DisplayName("newPassword shorter than 12 characters → throws RuntimeException")
         void shortNewPassword_throwsRuntimeException() {
             User user = seedUser("oscar", "oscar@test.com", Role.GUEST);
-            UserEditDto dto = editDto("oscar", "oscar@test.com", Role.GUEST, true, "abc");
+            UserEditDto dto = editDto("oscar", "oscar@test.com", Role.GUEST, true, "shortpass");
 
             assertThatThrownBy(() -> userService.adminUpdateUser(user.getId(), dto, null))
                     .isInstanceOf(RuntimeException.class)
-                    .hasMessageContaining("6");
+                    .hasMessageContaining("12"); // <-- Updated assertion
         }
 
         @Test
-        @DisplayName("newPassword of exactly 5 characters → throws (boundary: < 6 fails)")
-        void exactlyFiveCharPassword_throwsRuntimeException() {
+        @DisplayName("newPassword of exactly 11 characters → throws (boundary: < 12 fails)")
+        void exactlyElevenCharPassword_throwsRuntimeException() {
             User user = seedUser("pete", "pete@test.com", Role.GUEST);
-            UserEditDto dto = editDto("pete", "pete@test.com", Role.GUEST, true, "12345");
+            UserEditDto dto = editDto("pete", "pete@test.com", Role.GUEST, true, "12345678901"); // 11 chars
 
             assertThatThrownBy(() -> userService.adminUpdateUser(user.getId(), dto, null))
                     .isInstanceOf(RuntimeException.class);
         }
 
         @Test
-        @DisplayName("newPassword of exactly 6 characters → accepted (boundary: >= 6 passes)")
-        void exactlySixCharPassword_isAccepted() {
+        @DisplayName("newPassword of exactly 12 characters → accepted (boundary: >= 12 passes)")
+        void exactlyTwelveCharPassword_isAccepted() {
             User user = seedUser("quinn", "quinn@test.com", Role.GUEST);
-            UserEditDto dto = editDto("quinn", "quinn@test.com", Role.GUEST, true, "123456");
+            UserEditDto dto = editDto("quinn", "quinn@test.com", Role.GUEST, true, "123456789012"); // 12 chars
 
             userService.adminUpdateUser(user.getId(), dto, null);   // must not throw
 
             User updated = userRepository.findById(user.getId()).orElseThrow();
-            assertThat(passwordEncoder.matches("123456", updated.getPassword())).isTrue();
+            assertThat(passwordEncoder.matches("123456789012", updated.getPassword())).isTrue();
         }
 
         @Test
@@ -350,6 +359,23 @@ class UserServiceIntegrationTest {
             assertThatThrownBy(() -> userService.adminUpdateUser(999_999L, dto, null))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("User not found");
+        }
+
+        @Test
+        @DisplayName("admin unlocks a brute-force locked user → sets locked=false and resets attempts")
+        void adminUnlocksUser_resetsAttempts() {
+            User user = seedUser("lockedUser", "locked@test.com", Role.GUEST);
+            user.setLocked(true);
+            user.setFailedLoginAttempts(5);
+            userRepository.save(user);
+
+            // Admin submits the edit form with locked = false
+            UserEditDto dto = editDtoWithLock("lockedUser", "locked@test.com", Role.GUEST, true, false, null);
+            userService.adminUpdateUser(user.getId(), dto, null);
+
+            User updated = userRepository.findById(user.getId()).orElseThrow();
+            assertThat(updated.isLocked()).isFalse();
+            assertThat(updated.getFailedLoginAttempts()).isEqualTo(0);
         }
     }
 

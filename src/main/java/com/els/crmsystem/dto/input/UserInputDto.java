@@ -9,7 +9,7 @@ public record UserInputDto(
         String username,
 
         @NotBlank(message = "Password is required")
-        @Size(min = 6, message = "Password must be at least 6 characters")
+        @Size(min = 12, max = 72, message = "Пароль має містити від 12 до 72 символів")
         String password,
 
         @Email(message = "Invalid email format")

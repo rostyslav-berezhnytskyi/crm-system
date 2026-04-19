@@ -16,5 +16,6 @@ public record UserEditDto(
         String telegramId,
         Role role,
         boolean enabled,
+        Boolean locked,
         String newPassword // Optional!
 ) {}

@@ -27,6 +27,7 @@ public class EntityMapper {
                 user.getPhoneNumber(),
                 user.getRole(),
                 user.isEnabled(),
+                user.isLocked(),
                 user.getPhotoUrl(),
                 user.getTelegramId()
         );
