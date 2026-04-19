@@ -42,3 +42,6 @@ Thumbs.db
 *.env
 secrets.properties
 /uploads/**
+logs/
+/logs
+/logs/*
