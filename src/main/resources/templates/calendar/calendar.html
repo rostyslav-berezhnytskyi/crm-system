@@ -7,128 +7,85 @@
 <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
 <style>
-    #calendar {
-        max-width: 100%;
-        background: white;
-        padding: 25px;
-        border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        font-family: inherit;
-    }
+    /* Фільтр для зеленого/сірого кольору маркерів карти */
+    .marker-active { filter: hue-rotate(120deg) brightness(1.2); }
+    .marker-completed { filter: grayscale(100%) opacity(0.7); }
 
-    /* Bold, black grid borders */
-    .fc-theme-standard td, .fc-theme-standard th {
-        border-color: #000000 !important;
-    }
+    /* --- СТИЛІ КАЛЕНДАРЯ --- */
+    #calendar, #dashboardCalendar { max-width: 100%; background: white; font-family: inherit; }
 
-    /* Style the day headers (Mon, Tue, etc.) */
+    /* 1. Normal, elegant thin borders (Not fat black!) */
+    .fc-theme-standard td, .fc-theme-standard th { border-color: #dee2e6 !important; border-width: 1px !important; }
+
+    /* 2. Sleek column headers */
     .fc-col-header-cell {
-        background-color: #f8f9fa;
-        padding: 12px 0 !important;
-        color: #212529; /* Darker text */
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        font-weight: 800;
-        border-bottom: 2px solid #000000 !important; /* Thicker black line under headers */
+        background-color: #f8f9fa; padding: 12px 0 !important;
+        text-transform: uppercase; font-size: 0.85rem; font-weight: 700;
     }
 
-    /* Fix the ugly blue underlined day numbers */
-    .fc-daygrid-day-number {
-        color: #000000 !important; /* Pure black numbers */
-        text-decoration: none !important;
-        font-weight: 700;
-        padding: 8px 10px !important;
-    }
-
-    /* 1. Shaded Weekends (MUST come first!) */
-    .fc-day-sat, .fc-day-sun {
-        background-color: #e6f2ff !important; /* Slightly deeper soft blue */
-    }
-
-    /* 2. Highlight today (MUST come second to override weekends!) */
-    .fc-day-today {
-        background-color: #ffda9e !important; /* Stronger, brighter warm orange */
-    }
-
-    /* Beautiful Event Pills */
-    .fc-event {
-        cursor: pointer;
-        border: none !important;
-        border-radius: 6px !important;
-        padding: 4px 6px !important;
-        font-size: 0.8rem !important;
-        font-weight: 600;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-        margin: 2px 4px !important;
-        transition: transform 0.1s ease;
-    }
-    .fc-event:hover {
-        transform: scale(1.02);
-        opacity: 0.9;
-    }
-
-    /* Toolbar Buttons */
-    .fc-button-primary {
-        background-color: #ffffff !important;
+    /* FIX: Stop the days of the week (ПН, ВТ...) from looking like blue links */
+    .fc-col-header-cell-cushion {
         color: #495057 !important;
-        border: 1px solid #dee2e6 !important;
-        font-weight: 600 !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        text-decoration: none !important;
+        cursor: default !important;
     }
-    .fc-button-primary:hover {
-        background-color: #f8f9fa !important;
-    }
-    .fc-button-active {
-        background-color: #e9ecef !important;
+
+    /* 3. Clean day numbers (no blue underline) */
+    .fc-daygrid-day-number { color: #495057 !important; font-weight: 600; text-decoration: none !important; padding: 8px 10px !important; }
+
+    /* 4. Background colors for weekends/today ONLY in grid view */
+    .fc-daygrid-day.fc-day-sat, .fc-daygrid-day.fc-day-sun { background-color: #f8f9fa !important; } /* Soft light gray */
+    .fc-daygrid-day.fc-day-today { background-color: #fff3cd !important; } /* Warm bootstrap yellow */
+
+    /* 5. Fix List View (Remove blue links!) */
+    .fc-list-day-cushion a {
         color: #212529 !important;
-        border-color: #ced4da !important;
+        text-decoration: none !important;
+        cursor: default !important;
+        font-weight: 700 !important;
     }
-    .fc-toolbar-title {
-        font-weight: 800 !important;
-        color: #212529;
+
+    /* 6. Beautiful Event Pills */
+    .fc-event {
+        cursor: pointer; border: none !important; border-radius: 6px !important;
+        padding: 4px 6px !important; font-size: 0.8rem !important; font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08); transition: transform 0.1s ease;
     }
+    .fc-event:hover { transform: scale(1.02); opacity: 0.9; }
+    .fc-toolbar-title { font-weight: 800 !important; color: #212529; font-size: 1.25rem !important; }
 
     /* ========================================= */
     /* MOBILE RESPONSIVENESS FIXES               */
     /* ========================================= */
     @media (max-width: 768px) {
-        #calendar {
-            padding: 10px;
+        #calendar { padding: 10px; }
+
+        /* Force Stacked Headers */
+        .fc .fc-toolbar.fc-header-toolbar {
+            display: block !important;
+            text-align: center !important;
+            margin-bottom: 1rem !important;
         }
-        .fc-toolbar {
-            flex-direction: column;
-            gap: 12px;
+        .fc .fc-toolbar-chunk {
+            display: block !important;
+            margin-bottom: 12px !important;
+            text-align: center !important;
         }
-        .fc-toolbar-title {
+        .fc .fc-toolbar-chunk:last-child {
+            margin-bottom: 0 !important;
+        }
+        .fc .fc-toolbar-title {
             font-size: 1.25rem !important;
-            text-align: center;
+            display: inline-block !important;
         }
-        .fc-header-toolbar .fc-toolbar-chunk {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-        }
-
-        /* FIX: Prevent bold borders from crushing numbers on phones */
-        .fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid {
-            border-width: 1px !important;
+        .fc .fc-button {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.9rem !important;
         }
 
-        /* FIX: Shrink the text and padding so it fits neatly inside the small boxes */
-        .fc-daygrid-day-number {
-            padding: 4px 6px !important;
-            font-size: 0.85rem !important;
-        }
-        .fc-col-header-cell {
-            padding: 8px 0 !important;
-            font-size: 0.75rem !important;
-        }
-
-        /* Make event pills slightly smaller to fit narrow columns */
-        .fc-event {
-            font-size: 0.7rem !important;
-            padding: 2px 4px !important;
-        }
+        /* Make text smaller on phones */
+        .fc-daygrid-day-number { padding: 4px 6px !important; font-size: 0.85rem !important; }
+        .fc-event { font-size: 0.7rem !important; padding: 2px 4px !important; }
     }
 </style>
 
